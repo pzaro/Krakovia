@@ -1,1001 +1,538 @@
-<!DOCTYPE html>
-<html lang="el">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Krakow Trip Planner & Maps Pro</title>
-    <style>
-        :root {
-            --primary-red: #d32f2f;
-            --primary-dark: #8e1f1f;
-            --bg-color: #f4f7f6;
-            --map-blue: #1a73e8;
-            --text: #24323d;
-            --muted: #64748b;
-            --card: #ffffff;
-            --soft-red: #fff4f4;
-            --soft-blue: #e8f0fe;
-            --soft-gold: #fff8e6;
-            --border: #e5e7eb;
-            --success: #16a34a;
-            --shadow: 0 10px 30px rgba(0,0,0,0.08);
-        }
+import React, { useEffect, useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { MapPin, Search, Star, Wallet, CalendarDays, UtensilsCrossed, Landmark, Plane, MoonStar, ExternalLink } from "lucide-react";
+import { motion } from "framer-motion";
 
-        * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(180deg, #f7faf9 0%, #eef3f2 100%);
-            margin: 0;
-            padding: 15px;
-            color: var(--text);
-        }
+type PlaceCategory = "transport" | "food" | "sight" | "dousis" | "nightlife";
 
-        .container {
-            max-width: 760px;
-            margin: auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-        }
+type Place = {
+  id: string;
+  name: string;
+  category: PlaceCategory;
+  short: string;
+  description: string;
+  area: string;
+  duration: string;
+  price: string;
+  tags: string[];
+  mapsUrl: string;
+  dousis?: boolean;
+};
 
-        .hero {
-            background: linear-gradient(135deg, rgba(211,47,47,0.96), rgba(142,31,31,0.96)),
-                        url('https://images.unsplash.com/photo-1519197924294-4ba991a11128?auto=format&fit=crop&w=1200&q=80') center/cover;
-            color: white;
-            padding: 24px 20px 22px;
-        }
+type Budget = {
+  transport: number;
+  food: number;
+  attractions: number;
+  nightlife: number;
+  misc: number;
+};
 
-        .hero h1 {
-            margin: 0 0 8px;
-            font-size: 1.8rem;
-            line-height: 1.15;
-        }
+const places: Place[] = [
+  {
+    id: "transport-airport",
+    name: "Kraków Airport (KRK)",
+    category: "transport",
+    short: "Βασική πύλη άφιξης για την Κρακοβία.",
+    description: "Από εδώ ξεκινά η μεταφορά προς το κέντρο με τρένο, λεωφορείο ή ταξί. Για γρήγορο και άνετο ξεκίνημα, το τρένο προς Kraków Główny είναι συνήθως η πιο πρακτική λύση.",
+    area: "Balice",
+    duration: "20–30 λεπτά προς κέντρο",
+    price: "€",
+    tags: ["Airport", "Arrival", "KRK"],
+    mapsUrl: "https://maps.app.goo.gl/B9pWhE6x7W2W2mYBA",
+  },
+  {
+    id: "transport-train",
+    name: "SKA1 Train to Główny",
+    category: "transport",
+    short: "Η καλύτερη μεταφορά αεροδρόμιο → κέντρο.",
+    description: "Γρήγορη, ξεκούραστη και προβλέψιμη μεταφορά χωρίς traffic. Πολύ καλή επιλογή όταν θες να αφήσεις βαλίτσες και να βγεις άμεσα για βόλτα.",
+    area: "Airport → Center",
+    duration: "~20 λεπτά",
+    price: "20 PLN περίπου",
+    tags: ["Fast", "Train", "Center"],
+    mapsUrl: "https://maps.app.goo.gl/uLpU8XzH9X8vX6CFA",
+  },
+  {
+    id: "food-temida",
+    name: "Bar Mleczny pod Temidą",
+    category: "food",
+    short: "Αυθεντικό milk bar για budget πολωνικές γεύσεις.",
+    description: "Κλασική επιλογή για να δοκιμάσεις pierogi και παραδοσιακά πιάτα χωρίς τουριστικό περιτύλιγμα. Εξαιρετικό για αυθεντική και οικονομική εμπειρία.",
+    area: "Old Town",
+    duration: "45–60 λεπτά",
+    price: "€",
+    tags: ["Pierogi", "Budget", "Traditional"],
+    mapsUrl: "https://maps.app.goo.gl/vL7Yv9N8XN9fP8hV7",
+  },
+  {
+    id: "food-placnowy",
+    name: "Plac Nowy",
+    category: "food",
+    short: "Το σημείο για zapiekanka στο Kazimierz.",
+    description: "Street food stop με θρυλική zapiekanka και πολύ ζωντανή ατμόσφαιρα. Ιδανικό για χαλαρό βράδυ μετά από βόλτα στη γειτονιά.",
+    area: "Kazimierz",
+    duration: "30–45 λεπτά",
+    price: "€",
+    tags: ["Street Food", "Kazimierz", "Zapiekanka"],
+    mapsUrl: "https://maps.app.goo.gl/YyR9R5R9R5R9R5R9A",
+  },
+  {
+    id: "food-doroty",
+    name: "Kuchnia u Doroty",
+    category: "food",
+    short: "Σπιτική comfort πολωνική κουζίνα.",
+    description: "Πολύ καλή επιλογή για πλήρες γεύμα με ζεστή ατμόσφαιρα και πιάτα όπως żurek και άλλα πολωνικά classics.",
+    area: "Kazimierz",
+    duration: "60–90 λεπτά",
+    price: "€€",
+    tags: ["Żurek", "Homemade", "Comfort Food"],
+    mapsUrl: "https://maps.app.goo.gl/hG5mBq1P4J7U7K6S8",
+  },
+  {
+    id: "sight-wawel",
+    name: "Wawel Castle",
+    category: "sight",
+    short: "Το πιο εμβληματικό ιστορικό σημείο της πόλης.",
+    description: "Βασιλικό σύμβολο της Πολωνίας, με λόφο, αυλές, καθεδρικό και εξαιρετική αίσθηση ιστορικού βάρους. Από τα πρώτα σημεία που αξίζει να δεις.",
+    area: "Wawel Hill",
+    duration: "1.5–3 ώρες",
+    price: "€–€€",
+    tags: ["Iconic", "Royal", "History"],
+    mapsUrl: "https://maps.app.goo.gl/X9X9X9X9X9X9X9X9A",
+  },
+  {
+    id: "sight-rynek",
+    name: "Rynek Główny",
+    category: "sight",
+    short: "Η καρδιά της Παλιάς Πόλης.",
+    description: "Ιδανική αφετηρία για να καταλάβεις τη δομή της Κρακοβίας. Εδώ θα βρεις ατμόσφαιρα, αρχιτεκτονική, καφέ και εύκολη σύνδεση με τα βασικά αξιοθέατα.",
+    area: "Old Town",
+    duration: "1–2 ώρες",
+    price: "Free",
+    tags: ["Square", "Old Town", "Walk"],
+    mapsUrl: "https://maps.app.goo.gl/uX9X9X9X9X9X9X9X9",
+  },
+  {
+    id: "sight-schindler",
+    name: "Schindler Factory",
+    category: "sight",
+    short: "Βαθιά ιστορική και συναισθηματική εμπειρία.",
+    description: "Ένα από τα πιο ουσιαστικά μουσεία της πόλης, για την Κρακοβία της κατοχής και το ευρύτερο ιστορικό πλαίσιο του Β΄ Παγκοσμίου Πολέμου.",
+    area: "Podgórze",
+    duration: "1.5–2.5 ώρες",
+    price: "€€",
+    tags: ["Museum", "WWII", "History"],
+    mapsUrl: "https://maps.app.goo.gl/L9fP8hV7XN9fP8hV7",
+  },
+  {
+    id: "sight-wieliczka",
+    name: "Wieliczka Salt Mine",
+    category: "sight",
+    short: "Θεαματική υπόγεια εμπειρία εκτός κέντρου.",
+    description: "Μία από τις πιο εντυπωσιακές οργανωμένες επισκέψεις γύρω από την Κρακοβία, με υπόγειες στοές, αίθουσες και γλυπτά από αλάτι.",
+    area: "Wieliczka",
+    duration: "Μισή ημέρα",
+    price: "€€",
+    tags: ["Day Trip", "Underground", "Wow"],
+    mapsUrl: "https://maps.app.goo.gl/Z9vV7zR2W9vV7zR2A",
+  },
+  {
+    id: "dousis-oldtown",
+    name: "Δούσης Pick: Old Town + Barbican + St. Mary’s",
+    category: "dousis",
+    short: "Πρώτη γνωριμία με τον ιστορικό πυρήνα της πόλης.",
+    description: "Το ιδανικό πρώτο walk για να μπεις στο κλίμα της Κρακοβίας. Η μεσαιωνική μνήμη, το σάλπισμα της St. Mary’s και η αρχιτεκτονική της περιοχής δίνουν δυνατή πρώτη εικόνα.",
+    area: "Old Town",
+    duration: "2–3 ώρες",
+    price: "Free / €",
+    tags: ["Dousis", "Old Town", "Barbican"],
+    mapsUrl: "https://maps.app.goo.gl/uX9X9X9X9X9X9X9X9",
+    dousis: true,
+  },
+  {
+    id: "dousis-kazimierz",
+    name: "Δούσης Pick: Kazimierz + Schindler + Bernatek",
+    category: "dousis",
+    short: "Ιστορία, βόλτα και βραδινή ατμόσφαιρα.",
+    description: "Από πιο ιστορικό βάθος μέχρι πιο χαλαρό city feeling δίπλα στον Βιστούλα. Δυνατός συνδυασμός για γεμάτη ημέρα.",
+    area: "Kazimierz / Podgórze",
+    duration: "Μισή έως γεμάτη ημέρα",
+    price: "€–€€",
+    tags: ["Dousis", "Kazimierz", "Walk"],
+    mapsUrl: "https://maps.app.goo.gl/L9fP8hV7XN9fP8hV7",
+    dousis: true,
+  },
+  {
+    id: "night-hevre",
+    name: "Hevre",
+    category: "nightlife",
+    short: "Ατμοσφαιρικό Kazimierz night stop.",
+    description: "Πολύ καλή επιλογή για βραδινό ποτό ή χαλαρό κλείσιμο της ημέρας με ιδιαίτερο χαρακτήρα και πιο artsy αίσθηση.",
+    area: "Kazimierz",
+    duration: "1–2 ώρες",
+    price: "€€",
+    tags: ["Bar", "Cocktails", "Nightlife"],
+    mapsUrl: "https://maps.google.com/?q=Hevre+Krakow",
+  },
+];
 
-        .hero p {
-            margin: 0;
-            opacity: 0.95;
-            line-height: 1.5;
-            font-size: 0.98rem;
-        }
+const itinerary = [
+  {
+    day: "Ημέρα 1",
+    title: "Old Town Essentials",
+    items: ["Rynek Główny", "St. Mary’s", "Wawel Castle", "Δείπνο σε παραδοσιακό spot"],
+  },
+  {
+    day: "Ημέρα 2",
+    title: "Kazimierz & History",
+    items: ["Schindler Factory", "Kazimierz walk", "Plac Nowy", "Hevre για βράδυ"],
+  },
+  {
+    day: "Ημέρα 3",
+    title: "Major Excursion",
+    items: ["Wieliczka Salt Mine", "ή Auschwitz", "ή πιο χαλαρή μέρα με αγορές και καφέ"],
+  },
+];
 
-        .quick-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 18px;
-        }
+const defaultBudget: Budget = {
+  transport: 40,
+  food: 140,
+  attractions: 120,
+  nightlife: 60,
+  misc: 40,
+};
 
-        .stat {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 14px;
-            padding: 12px;
-            backdrop-filter: blur(6px);
-        }
+const storageKeys = {
+  checked: "krakow-app-checked",
+  favorites: "krakow-app-favorites",
+  budget: "krakow-app-budget",
+};
 
-        .stat .label {
-            font-size: 0.75rem;
-            opacity: 0.85;
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .stat .value {
-            font-weight: 700;
-            font-size: 1rem;
-        }
-
-        .toolbar {
-            padding: 16px 16px 8px;
-            background: #fff;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .search-box {
-            position: relative;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 14px 14px 14px 42px;
-            border-radius: 14px;
-            border: 1px solid var(--border);
-            background: #fafafa;
-            font-size: 0.98rem;
-            outline: none;
-        }
-
-        .search-box input:focus {
-            border-color: var(--primary-red);
-            background: white;
-            box-shadow: 0 0 0 4px rgba(211,47,47,0.08);
-        }
-
-        .search-icon {
-            position: absolute;
-            top: 50%;
-            left: 14px;
-            transform: translateY(-50%);
-            color: var(--muted);
-        }
-
-        .tabs {
-            display: flex;
-            background: #24323d;
-            overflow-x: auto;
-            scrollbar-width: none;
-        }
-        .tabs::-webkit-scrollbar { display: none; }
-
-        .tab-btn {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            background: none;
-            color: white;
-            cursor: pointer;
-            font-weight: 700;
-            min-width: 130px;
-            transition: 0.2s ease;
-        }
-
-        .tab-btn.active { background: var(--primary-red); }
-
-        .tab-content {
-            display: none;
-            padding: 20px;
-            animation: fadeIn 0.25s ease;
-        }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
-        h2 {
-            color: var(--primary-red);
-            border-bottom: 2px solid #eee;
-            padding-bottom: 8px;
-            margin-top: 0;
-            margin-bottom: 16px;
-        }
-
-        .section-note {
-            background: var(--soft-gold);
-            border: 1px solid #f5df9b;
-            color: #7a5d00;
-            padding: 12px 14px;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            font-size: 0.93rem;
-            line-height: 1.45;
-        }
-
-        .info-card {
-            background: var(--soft-red);
-            border-left: 5px solid var(--primary-red);
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 10px;
-        }
-
-        .planner-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            margin-bottom: 14px;
-            overflow: hidden;
-            box-shadow: 0 6px 20px rgba(15,23,42,0.04);
-        }
-
-        .card-top {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            justify-content: space-between;
-            padding: 14px;
-            background: #fff;
-        }
-
-        .card-left {
-            display: flex;
-            gap: 12px;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .check-wrap {
-            padding-top: 3px;
-        }
-
-        .planner-card input[type="checkbox"] {
-            transform: scale(1.3);
-            cursor: pointer;
-        }
-
-        .title-group {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .card-title {
-            font-size: 1rem;
-            font-weight: 700;
-            margin: 0 0 6px;
-            color: var(--text);
-        }
-
-        .card-subtitle {
-            margin: 0;
-            color: var(--muted);
-            font-size: 0.92rem;
-            line-height: 1.45;
-        }
-
-        .badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .badge {
-            background: #f1f5f9;
-            color: #334155;
-            border-radius: 999px;
-            font-size: 0.77rem;
-            padding: 6px 10px;
-            font-weight: 600;
-        }
-
-        .map-link {
-            text-decoration: none;
-            font-size: 1.25rem;
-            padding: 10px 12px;
-            border-radius: 12px;
-            background: var(--soft-blue);
-            color: var(--map-blue);
-            align-self: center;
-            transition: 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .map-link:hover { transform: translateY(-1px); }
-
-        .details {
-            padding: 0 14px 14px;
-        }
-
-        .toggle-details {
-            width: 100%;
-            border: none;
-            background: #fafafa;
-            border-top: 1px solid var(--border);
-            padding: 12px 14px;
-            cursor: pointer;
-            font-weight: 700;
-            color: var(--primary-red);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .details-content {
-            display: none;
-            padding-top: 12px;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .details-content.open { display: block; }
-
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin: 12px 0;
-        }
-
-        .mini-box {
-            background: #fafafa;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 10px;
-        }
-
-        .mini-box strong {
-            display: block;
-            font-size: 0.82rem;
-            color: var(--muted);
-            margin-bottom: 4px;
-        }
-
-        .mini-box span {
-            font-size: 0.95rem;
-            line-height: 1.4;
-        }
-
-        .tips {
-            margin: 0;
-            padding-left: 18px;
-            color: var(--text);
-            line-height: 1.55;
-            font-size: 0.95rem;
-        }
-
-        .tips li { margin-bottom: 6px; }
-
-        .progress-wrap {
-            padding: 0 20px 20px;
-        }
-
-        .progress-card {
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 14px;
-        }
-
-        .progress-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            background: #e2e8f0;
-            border-radius: 999px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, var(--primary-red), #ff6b6b);
-            border-radius: 999px;
-            transition: width 0.25s ease;
-        }
-
-        .footer-note {
-            color: var(--muted);
-            font-size: 0.85rem;
-            line-height: 1.5;
-            padding: 0 20px 20px;
-        }
-
-        .hidden-by-search { display: none !important; }
-
-        input[type="checkbox"]:checked ~ .title-group .card-title,
-        input[type="checkbox"]:checked ~ .title-group .card-subtitle {
-            text-decoration: line-through;
-            color: #94a3b8;
-        }
-
-        @media (max-width: 640px) {
-            .quick-stats,
-            .details-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .card-top {
-                align-items: center;
-            }
-
-            .hero h1 { font-size: 1.5rem; }
-            .tab-btn { min-width: 110px; font-size: 0.92rem; }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="hero">
-        <h1>🇵🇱 Krakow Trip Planner & Food Guide</h1>
-        <p>Ένας πιο «travel agent» οδηγός με πρακτικές πληροφορίες, mini περιγραφές για τα βασικά σημεία, food highlights και checklists που αποθηκεύονται τοπικά στη συσκευή σου.</p>
-        <div class="quick-stats">
-            <div class="stat">
-                <span class="label">Αεροδρόμιο</span>
-                <span class="value">KRK Balice</span>
+function SectionCard({
+  place,
+  checked,
+  favorite,
+  onToggle,
+  onFavorite,
+}: {
+  place: Place;
+  checked: boolean;
+  favorite: boolean;
+  onToggle: (id: string) => void;
+  onFavorite: (id: string) => void;
+}) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+      <Card className="rounded-3xl shadow-sm border-slate-200 overflow-hidden">
+        <CardHeader className="pb-3">
+          <div className="flex items-start gap-3">
+            <Checkbox checked={checked} onCheckedChange={() => onToggle(place.id)} className="mt-1" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className={`text-base ${checked ? "line-through text-slate-400" : ""}`}>
+                    {place.name}
+                  </CardTitle>
+                  <p className={`text-sm mt-2 ${checked ? "text-slate-400" : "text-slate-600"}`}>{place.short}</p>
+                </div>
+                <Button variant={favorite ? "default" : "outline"} size="icon" className="rounded-full shrink-0" onClick={() => onFavorite(place.id)}>
+                  <Star className={`h-4 w-4 ${favorite ? "fill-current" : ""}`} />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {place.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="rounded-full">{tag}</Badge>
+                ))}
+              </div>
             </div>
-            <div class="stat">
-                <span class="label">Κέντρο</span>
-                <span class="value">Główny</span>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="grid md:grid-cols-3 gap-3 mb-4 text-sm">
+            <div className="rounded-2xl bg-slate-50 p-3"><div className="text-slate-500 mb-1">Περιοχή</div><div className="font-medium">{place.area}</div></div>
+            <div className="rounded-2xl bg-slate-50 p-3"><div className="text-slate-500 mb-1">Χρόνος</div><div className="font-medium">{place.duration}</div></div>
+            <div className="rounded-2xl bg-slate-50 p-3"><div className="text-slate-500 mb-1">Κόστος</div><div className="font-medium">{place.price}</div></div>
+          </div>
+          <p className="text-sm text-slate-700 leading-6">{place.description}</p>
+          <div className="flex gap-2 mt-4">
+            <Button asChild className="rounded-2xl">
+              <a href={place.mapsUrl} target="_blank" rel="noreferrer">
+                <MapPin className="h-4 w-4 mr-2" /> Google Maps
+              </a>
+            </Button>
+            <Button asChild variant="outline" className="rounded-2xl">
+              <a href={place.mapsUrl} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-4 w-4 mr-2" /> Άνοιγμα
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+export default function KrakowTravelApp() {
+  const [query, setQuery] = useState("");
+  const [checkedIds, setCheckedIds] = useState<string[]>([]);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [budget, setBudget] = useState<Budget>(defaultBudget);
+
+  useEffect(() => {
+    const checked = localStorage.getItem(storageKeys.checked);
+    const favorites = localStorage.getItem(storageKeys.favorites);
+    const savedBudget = localStorage.getItem(storageKeys.budget);
+    if (checked) setCheckedIds(JSON.parse(checked));
+    if (favorites) setFavoriteIds(JSON.parse(favorites));
+    if (savedBudget) setBudget(JSON.parse(savedBudget));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.checked, JSON.stringify(checkedIds));
+  }, [checkedIds]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.favorites, JSON.stringify(favoriteIds));
+  }, [favoriteIds]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKeys.budget, JSON.stringify(budget));
+  }, [budget]);
+
+  const filteredPlaces = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return places;
+    return places.filter((p) => `${p.name} ${p.short} ${p.description} ${p.tags.join(" ")} ${p.area}`.toLowerCase().includes(q));
+  }, [query]);
+
+  const progress = Math.round((checkedIds.length / places.length) * 100);
+  const totalBudget = Object.values(budget).reduce((a, b) => a + b, 0);
+
+  const toggleChecked = (id: string) => {
+    setCheckedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const toggleFavorite = (id: string) => {
+    setFavoriteIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const byCategory = (category: PlaceCategory) => filteredPlaces.filter((p) => p.category === category);
+  const favorites = filteredPlaces.filter((p) => favoriteIds.includes(p.id));
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="rounded-[28px] overflow-hidden border-0 shadow-xl bg-gradient-to-br from-rose-700 via-red-600 to-orange-500 text-white">
+            <CardContent className="p-6 md:p-8">
+              <div className="grid lg:grid-cols-[1.5fr_1fr] gap-6 items-end">
+                <div>
+                  <div className="flex items-center gap-2 text-sm/6 mb-3 opacity-90">
+                    <Plane className="h-4 w-4" /> Krakow Travel App MVP
+                  </div>
+                  <h1 className="text-3xl md:text-5xl font-black tracking-tight">Krakow Explorer</h1>
+                  <p className="mt-3 text-white/90 max-w-2xl leading-7">
+                    Κανονική travel app λογική: itinerary, food, sights, Δούσης picks, nightlife, favorites, budget και checklist σε μία ενιαία mobile-first εμπειρία.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-5">
+                    <Badge className="rounded-full bg-white/15 hover:bg-white/15">Mobile-first</Badge>
+                    <Badge className="rounded-full bg-white/15 hover:bg-white/15">Local storage</Badge>
+                    <Badge className="rounded-full bg-white/15 hover:bg-white/15">Vercel-ready</Badge>
+                    <Badge className="rounded-full bg-white/15 hover:bg-white/15">PWA-ready</Badge>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-3xl bg-white/10 p-4 backdrop-blur">
+                    <div className="text-sm text-white/80">Checklist</div>
+                    <div className="text-2xl font-bold mt-1">{checkedIds.length}/{places.length}</div>
+                  </div>
+                  <div className="rounded-3xl bg-white/10 p-4 backdrop-blur">
+                    <div className="text-sm text-white/80">Budget</div>
+                    <div className="text-2xl font-bold mt-1">{totalBudget} PLN</div>
+                  </div>
+                  <div className="rounded-3xl bg-white/10 p-4 backdrop-blur col-span-2">
+                    <div className="flex justify-between text-sm text-white/80 mb-2">
+                      <span>Trip progress</span>
+                      <span>{progress}%</span>
+                    </div>
+                    <Progress value={progress} className="h-3 bg-white/20" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <Card className="rounded-3xl shadow-sm border-slate-200">
+          <CardContent className="p-4 md:p-5">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Αναζήτηση για Wawel, pierogi, Kazimierz, Dousis, nightlife..."
+                className="pl-11 rounded-2xl h-12"
+              />
             </div>
-            <div class="stat">
-                <span class="label">Top εμπειρία</span>
-                <span class="value">Wawel + Kazimierz</span>
+          </CardContent>
+        </Card>
+
+        <Tabs defaultValue="discover" className="space-y-6">
+          <TabsList className="grid grid-cols-2 md:grid-cols-6 rounded-2xl h-auto p-1">
+            <TabsTrigger value="discover" className="rounded-2xl"><Landmark className="h-4 w-4 mr-2" />Discover</TabsTrigger>
+            <TabsTrigger value="itinerary" className="rounded-2xl"><CalendarDays className="h-4 w-4 mr-2" />Plan</TabsTrigger>
+            <TabsTrigger value="budget" className="rounded-2xl"><Wallet className="h-4 w-4 mr-2" />Budget</TabsTrigger>
+            <TabsTrigger value="food" className="rounded-2xl"><UtensilsCrossed className="h-4 w-4 mr-2" />Food</TabsTrigger>
+            <TabsTrigger value="nightlife" className="rounded-2xl"><MoonStar className="h-4 w-4 mr-2" />Night</TabsTrigger>
+            <TabsTrigger value="favorites" className="rounded-2xl"><Star className="h-4 w-4 mr-2" />Favorites</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="discover" className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-4">
+              {[{
+                title: "Μεταφορές",
+                icon: Plane,
+                items: byCategory("transport"),
+              }, {
+                title: "Αξιοθέατα",
+                icon: Landmark,
+                items: byCategory("sight"),
+              }, {
+                title: "Food Spots",
+                icon: UtensilsCrossed,
+                items: byCategory("food"),
+              }, {
+                title: "Δούσης Picks",
+                icon: Star,
+                items: byCategory("dousis"),
+              }].map((section) => (
+                <Card key={section.title} className="rounded-3xl border-slate-200">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <section.icon className="h-5 w-5" /> {section.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {section.items.length ? section.items.map((place) => (
+                      <SectionCard
+                        key={place.id}
+                        place={place}
+                        checked={checkedIds.includes(place.id)}
+                        favorite={favoriteIds.includes(place.id)}
+                        onToggle={toggleChecked}
+                        onFavorite={toggleFavorite}
+                      />
+                    )) : <div className="text-sm text-slate-500">Δεν βρέθηκαν αποτελέσματα.</div>}
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="itinerary" className="space-y-4">
+            <div className="grid lg:grid-cols-3 gap-4">
+              {itinerary.map((day) => (
+                <motion.div key={day.day} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                  <Card className="rounded-3xl border-slate-200 h-full">
+                    <CardHeader>
+                      <div className="text-sm text-slate-500">{day.day}</div>
+                      <CardTitle className="text-xl">{day.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3 text-sm text-slate-700">
+                        {day.items.map((item) => (
+                          <li key={item} className="rounded-2xl bg-slate-50 px-4 py-3">{item}</li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="budget" className="space-y-4">
+            <Card className="rounded-3xl border-slate-200">
+              <CardHeader>
+                <CardTitle>Trip Budget Calculator</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {Object.entries(budget).map(([key, value]) => (
+                    <div key={key} className="space-y-2">
+                      <label className="text-sm font-medium capitalize">{key}</label>
+                      <Input
+                        type="number"
+                        value={value}
+                        onChange={(e) => setBudget((prev) => ({ ...prev, [key]: Number(e.target.value || 0) }))}
+                        className="rounded-2xl"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-6 rounded-3xl bg-slate-900 text-white p-6 flex items-center justify-between">
+                  <div>
+                    <div className="text-sm text-white/70">Συνολικό εκτιμώμενο budget</div>
+                    <div className="text-3xl font-black mt-1">{totalBudget} PLN</div>
+                  </div>
+                  <Wallet className="h-8 w-8" />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="food" className="space-y-4">
+            {byCategory("food").map((place) => (
+              <SectionCard
+                key={place.id}
+                place={place}
+                checked={checkedIds.includes(place.id)}
+                favorite={favoriteIds.includes(place.id)}
+                onToggle={toggleChecked}
+                onFavorite={toggleFavorite}
+              />
+            ))}
+          </TabsContent>
+
+          <TabsContent value="nightlife" className="space-y-4">
+            {byCategory("nightlife").map((place) => (
+              <SectionCard
+                key={place.id}
+                place={place}
+                checked={checkedIds.includes(place.id)}
+                favorite={favoriteIds.includes(place.id)}
+                onToggle={toggleChecked}
+                onFavorite={toggleFavorite}
+              />
+            ))}
+          </TabsContent>
+
+          <TabsContent value="favorites" className="space-y-4">
+            {favorites.length ? favorites.map((place) => (
+              <SectionCard
+                key={place.id}
+                place={place}
+                checked={checkedIds.includes(place.id)}
+                favorite={favoriteIds.includes(place.id)}
+                onToggle={toggleChecked}
+                onFavorite={toggleFavorite}
+              />
+            )) : (
+              <Card className="rounded-3xl border-dashed border-slate-300">
+                <CardContent className="p-8 text-center text-slate-500">
+                  Δεν έχεις βάλει favorites ακόμα. Πάτα το αστεράκι σε όποιο σημείο θέλεις να κρατήσεις.
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
-
-    <div class="toolbar">
-        <div class="search-box">
-            <span class="search-icon">🔎</span>
-            <input type="text" id="searchInput" placeholder="Αναζήτηση για φαγητό, αξιοθέατα, transport, pierogi, Wawel...">
-        </div>
-    </div>
-
-    <div class="tabs">
-        <button class="tab-btn active" onclick="openTab(event, 'transport')">Μεταφορές</button>
-        <button class="tab-btn" onclick="openTab(event, 'food')">Φαγητό</button>
-        <button class="tab-btn" onclick="openTab(event, 'sights')">Αξιοθέατα</button>
-        <button class="tab-btn" onclick="openTab(event, 'dousis')">Tips Δούση</button>
-    </div>
-
-    <div id="transport" class="tab-content active">
-        <h2>✈️ Άφιξη & Μετακίνηση</h2>
-        <div class="section-note">Tip ταξιδιωτικού πράκτορα: από το αεροδρόμιο προς το κέντρο, το τρένο είναι συνήθως η πιο γρήγορη και ξεκούραστη επιλογή. Κράτα και τη γραμμή 300 σαν εναλλακτική αν σε βολεύει καλύτερα το σημείο αποβίβασης.</div>
-
-        <div class="info-card">
-            <strong>Αεροδρόμιο Balice (KRK)</strong><br>
-            Το βασικό αεροδρόμιο της Κρακοβίας. Από εδώ φεύγεις εύκολα για κέντρο με τρένο, λεωφορείο ή ταξί.
-            <a href="https://maps.app.goo.gl/B9pWhE6x7W2W2mYBA" target="_blank" class="map-link">📍</a>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="train ska1 airport glowny center ticket krk balice">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="t1" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Τρένο SKA1: Αεροδρόμιο → Kraków Główny</p>
-                        <p class="card-subtitle">Η πιο πρακτική επιλογή για γρήγορη πρόσβαση στο κέντρο χωρίς άγχος για κίνηση.</p>
-                        <div class="badges">
-                            <span class="badge">~20 PLN</span>
-                            <span class="badge">Γρήγορη επιλογή</span>
-                            <span class="badge">Κεντρικός σταθμός</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/uLpU8XzH9X8vX6CFA" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Πληροφορίες διαδρομής <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <div class="details-grid">
-                        <div class="mini-box"><strong>Ιδανικό για</strong><span>Άφιξη με βαλίτσα, πρώτο check-in, σύνδεση με παλιά πόλη.</span></div>
-                        <div class="mini-box"><strong>Στόχος</strong><span>Σε βγάζει στον κεντρικό κόμβο συγκοινωνιών της πόλης.</span></div>
-                    </div>
-                    <ul class="tips">
-                        <li>Αγόρασε εισιτήριο πριν επιβιβαστείς ή μέσω εφαρμογής/μηχανήματος.</li>
-                        <li>Ο σταθμός Główny είναι ιδανικό σημείο για σύνδεση με παλιά πόλη ή Kazimierz.</li>
-                        <li>Κράτα screenshot του δρομολογίου ώστε να το έχεις offline.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="bus 300 airport krakow center public transport budget">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="t2" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Λεωφορείο 300</p>
-                        <p class="card-subtitle">Οικονομική εναλλακτική για μετακίνηση από/προς το αεροδρόμιο, ειδικά αν σε εξυπηρετεί η διαδρομή του.</p>
-                        <div class="badges">
-                            <span class="badge">Budget επιλογή</span>
-                            <span class="badge">Δημόσια συγκοινωνία</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/B9pWhE6x7W2W2mYBA" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Πότε σε βολεύει <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <div class="details-grid">
-                        <div class="mini-box"><strong>Ιδανικό για</strong><span>Χαμηλότερο budget και πιο flexible προσέγγιση.</span></div>
-                        <div class="mini-box"><strong>Σημείωση</strong><span>Τσέκαρε νωρίτερα τις στάσεις για να κατέβεις όσο πιο κοντά γίνεται στο κατάλυμα.</span></div>
-                    </div>
-                    <ul class="tips">
-                        <li>Έχε έτοιμο πλάνο Β αν φτάνεις αργά το βράδυ.</li>
-                        <li>Δες από πριν ποια στάση σε εξυπηρετεί για το κατάλυμά σου.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="main station glowny old town connection">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="t3" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Kraków Główny</p>
-                        <p class="card-subtitle">Κύριος συγκοινωνιακός κόμβος της πόλης και πρακτική βάση για να ξεκινήσεις την εξερεύνηση.</p>
-                        <div class="badges">
-                            <span class="badge">Transport hub</span>
-                            <span class="badge">Κοντά στην Παλιά Πόλη</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/uLpU8XzH9X8vX6CFA" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Γιατί σε συμφέρει <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <ul class="tips">
-                        <li>Από εδώ πας εύκολα Old Town, tram lines και συνδέσεις για ημερήσιες εκδρομές.</li>
-                        <li>Αν μένεις κέντρο, μπορείς να πας και με τα πόδια σε αρκετά σημεία.</li>
-                        <li>Ιδανικό σημείο συνάντησης αν ταξιδεύετε παρέα.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="food" class="tab-content">
-        <h2>🍴 Τοπικά Στέκια & Γεύσεις</h2>
-        <div class="section-note">Στόχευσε σε 4 κλασικές πολωνικές εμπειρίες: pierogi, żurek, zapiekanka και βόλτα σε τοπική αγορά. Έτσι θα νιώσεις την πόλη χωρίς να χρειαστείς ακριβά tourist menus.</div>
-
-        <div class="planner-card searchable-item" data-search="bar mleczny pod temida pierogi polish food budget old town">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="f1" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Bar Mleczny pod Temidą</p>
-                        <p class="card-subtitle">Κλασικό milk bar για αυθεντική, απλή και οικονομική πολωνική κουζίνα κοντά στην Παλιά Πόλη.</p>
-                        <div class="badges">
-                            <span class="badge">Pierogi</span>
-                            <span class="badge">Budget</span>
-                            <span class="badge">Παραδοσιακό</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/vL7Yv9N8XN9fP8hV7" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Τι να δοκιμάσεις <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <div class="details-grid">
-                        <div class="mini-box"><strong>Must order</strong><span>Pierogi, σούπα ημέρας, schnitzel ή pancakes ανάλογα το μενού.</span></div>
-                        <div class="mini-box"><strong>Ατμόσφαιρα</strong><span>Local, γρήγορη, ανεπιτήδευτη και value for money.</span></div>
-                    </div>
-                    <ul class="tips">
-                        <li>Πήγαινε νωρίς για πιο άνετη εμπειρία.</li>
-                        <li>Ιδανικό για μεσημεριανό ανάμεσα σε αξιοθέατα.</li>
-                        <li>Αν θες αυθεντικότητα αντί για fancy περιβάλλον, είναι σωστή επιλογή.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="plac nowy zapiekanka kazimierz street food nightlife">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="f2" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Plac Nowy</p>
-                        <p class="card-subtitle">Η θρυλική στάση για zapiekanka στην καρδιά του Kazimierz και σημείο με έντονη local ενέργεια.</p>
-                        <div class="badges">
-                            <span class="badge">Zapiekanka</span>
-                            <span class="badge">Street food</span>
-                            <span class="badge">Kazimierz</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/YyR9R5R9R5R9R5R9A" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Τι παίζει εδώ <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <div class="details-grid">
-                        <div class="mini-box"><strong>Signature</strong><span>Zapiekanka: μακρόστενο ψημένο ψωμί, συνήθως με μανιτάρια, τυρί και extra toppings.</span></div>
-                        <div class="mini-box"><strong>Πότε</strong><span>Τέλειο για βραδινή βόλτα ή γρήγορο φαγητό μετά το περπάτημα.</span></div>
-                    </div>
-                    <ul class="tips">
-                        <li>Κάνε βόλτα πρώτα στο Kazimierz και κλείσε εδώ τη βραδιά σου.</li>
-                        <li>Προτίμησε να δοκιμάσεις μία κλασική και μία πιο «φορτωμένη» εκδοχή.</li>
-                        <li>Η περιοχή έχει και πολύ ωραία μπαρ/καφέ για συνέχεια.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="kuchnia u doroty zurek traditional polish homemade kazimierz">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="f3" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Kuchnia u Doroty</p>
-                        <p class="card-subtitle">Από τα πιο αγαπημένα στέκια για σπιτική πολωνική κουζίνα με έμφαση στις comfort γεύσεις.</p>
-                        <div class="badges">
-                            <span class="badge">Żurek</span>
-                            <span class="badge">Σπιτικό στυλ</span>
-                            <span class="badge">Comfort food</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/hG5mBq1P4J7U7K6S8" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Τι αξίζει <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <div class="details-grid">
-                        <div class="mini-box"><strong>Best picks</strong><span>Żurek, κοτόπουλο, παραδοσιακά πιάτα ημέρας, πατάτες και σαλάτες.</span></div>
-                        <div class="mini-box"><strong>Γιατί να πας</strong><span>Για πιο ολοκληρωμένο sit-down γεύμα με αίσθηση «μαμάς».</span></div>
-                    </div>
-                    <ul class="tips">
-                        <li>Ιδανικό όταν θες πιο γεμάτο γεύμα και όχι μόνο snack.</li>
-                        <li>Ταιριάζει μετά από επίσκεψη σε Schindler ή βόλτα στο Kazimierz.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="stary kleparz market food local products shopping">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="f4" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Stary Kleparz</p>
-                        <p class="card-subtitle">Παραδοσιακή αγορά για να δεις local ρυθμό ζωής, προϊόντα, σνακ και καθημερινή Κρακοβία.</p>
-                        <div class="badges">
-                            <span class="badge">Αγορά</span>
-                            <span class="badge">Local προϊόντα</span>
-                            <span class="badge">Morning stop</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/N6vL3hV4zR2W9vV7" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Πώς να το αξιοποιήσεις <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <div class="details-grid">
-                        <div class="mini-box"><strong>Τι θα βρεις</strong><span>Φρέσκα προϊόντα, λουλούδια, local προμήθειες και καθημερινή αγορά.</span></div>
-                        <div class="mini-box"><strong>Ιδανικό timing</strong><span>Πρωί ή νωρίς μεσημέρι πριν γεμίσει η μέρα σου.</span></div>
-                    </div>
-                    <ul class="tips">
-                        <li>Καλή στάση για χαλαρό ξεκίνημα ημέρας.</li>
-                        <li>Ωραίο σημείο για πιο «ανεπεξέργαστη» εμπειρία της πόλης πέρα από τα τουριστικά spots.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="sights" class="tab-content">
-        <h2>🏛️ Must See Αξιοθέατα</h2>
-        <div class="section-note">Για πρώτο ταξίδι στην Κρακοβία, η σωστή ροή είναι συνήθως: Old Town → Wawel → Kazimierz → Schindler → Wieliczka σε ξεχωρισή μισή ή ολόκληρη μέρα.</div>
-
-        <div class="planner-card searchable-item" data-search="wawel castle wawel cathedral royal castle krakow dragon hill">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="s1" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Κάστρο Wawel</p>
-                        <p class="card-subtitle">Το πιο εμβληματικό ιστορικό σύνολο της πόλης, πάνω στον λόφο με βασιλικό χαρακτήρα και έντονο συμβολισμό για την Πολωνία.</p>
-                        <div class="badges">
-                            <span class="badge">Iconic</span>
-                            <span class="badge">Royal site</span>
-                            <span class="badge">Πανοραμική θέα</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/X9X9X9X9X9X9X9X9A" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Γιατί αξίζει <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <div class="details-grid">
-                        <div class="mini-box"><strong>Μην χάσεις</strong><span>Αυλές, θέα, καθεδρικό, βασιλικό λόφο και – αν προλάβεις – κάποιο επιμέρους exhibition.</span></div>
-                        <div class="mini-box"><strong>Ιδανικός χρόνος</strong><span>1.5–3 ώρες ανάλογα αν θα μπεις και σε εσωτερικούς χώρους.</span></div>
-                    </div>
-                    <ul class="tips">
-                        <li>Πήγαινε πρωί για καλύτερο ρυθμό και λιγότερη πίεση.</li>
-                        <li>Συνδύασέ το άνετα με βόλτα προς τον ποταμό και την Παλιά Πόλη.</li>
-                        <li>Αν θες φωτογραφίες, το φως αργά το απόγευμα είναι εξαιρετικό.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="main market square rynek glowny old town cloth hall st mary">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="s2" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Main Market Square (Rynek Główny)</p>
-                        <p class="card-subtitle">Η καρδιά της Παλιάς Πόλης, ιδανική για βόλτα, αρχιτεκτονική, φωτογραφίες και στάσεις για καφέ.</p>
-                        <div class="badges">
-                            <span class="badge">Old Town</span>
-                            <span class="badge">Βόλτα</span>
-                            <span class="badge">Κέντρο πόλης</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/uX9X9X9X9X9X9X9X9" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Τι να κάνεις εδώ <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <div class="details-grid">
-                        <div class="mini-box"><strong>Highlights</strong><span>St. Mary’s Basilica, Cloth Hall, street atmosphere και πλήθος στενάκια γύρω γύρω.</span></div>
-                        <div class="mini-box"><strong>Ρόλος στο trip</strong><span>Είναι η καλύτερη αφετηρία για να οργανώσεις το περπάτημά σου.</span></div>
-                    </div>
-                    <ul class="tips">
-                        <li>Κάνε εδώ το πρώτο σου orientation στην πόλη.</li>
-                        <li>Μην κάτσεις απαραίτητα στο πιο τουριστικό σημείο της πλατείας αν θες καλύτερο value.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="schindler factory oskar schindler enamel factory museum world war 2">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="s3" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Εργοστάσιο Σίντλερ</p>
-                        <p class="card-subtitle">Συγκλονιστική μουσειακή εμπειρία για την Κρακοβία της ναζιστικής κατοχής και το ιστορικό πλαίσιο της εποχής.</p>
-                        <div class="badges">
-                            <span class="badge">Ιστορία</span>
-                            <span class="badge">WWII</span>
-                            <span class="badge">Μουσείο</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/L9fP8hV7XN9fP8hV7" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Τι να περιμένεις <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <div class="details-grid">
-                        <div class="mini-box"><strong>Στυλ επίσκεψης</strong><span>Σοβαρή, βιωματική, πυκνή σε πληροφορία και συναισθηματικά φορτισμένη.</span></div>
-                        <div class="mini-box"><strong>Χρόνος</strong><span>Υπολόγισε περίπου 1.5–2.5 ώρες για άνετη επίσκεψη.</span></div>
-                    </div>
-                    <ul class="tips">
-                        <li>Κλείσε εισιτήριο νωρίς αν έχεις συγκεκριμένη ημέρα.</li>
-                        <li>Ταιριάζει πολύ καλά με βόλτα στην περιοχή Podgórze και φαγητό μετά.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="wieliczka salt mine day trip salt mine underground chambers chapel">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="s4" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Αλατωρυχείο Wieliczka</p>
-                        <p class="card-subtitle">Μοναδική υπόγεια εμπειρία με στοές, αίθουσες, γλυπτά από αλάτι και ατμόσφαιρα που δεν μοιάζει με τίποτα άλλο.</p>
-                        <div class="badges">
-                            <span class="badge">Day trip</span>
-                            <span class="badge">Underground</span>
-                            <span class="badge">UNESCO vibe</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/Z9vV7zR2W9vV7zR2A" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Οργάνωση επίσκεψης <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <div class="details-grid">
-                        <div class="mini-box"><strong>Χρόνος</strong><span>Συνήθως θέλει ξεχωριστό μισό ή σχεδόν ολόκληρο κομμάτι ημέρας.</span></div>
-                        <div class="mini-box"><strong>Χαρακτήρας</strong><span>Πιο θεαματικό και «wow» αξιοθέατο από όσο φαντάζεσαι αρχικά.</span></div>
-                    </div>
-                    <ul class="tips">
-                        <li>Φόρα άνετα παπούτσια και κράτα ελαφρύ layer γιατί υπόγεια κάνει πιο δροσερά.</li>
-                        <li>Ιδανικό για ξεχωριστή εκδρομή από το κέντρο της Κρακοβίας.</li>
-                        <li>Κλείσε online αν δεν θες να ρισκάρεις διαθεσιμότητα.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="dousis" class="tab-content">
-        <h2>⭐ Tips & Επιλογές Δούση</h2>
-        <div class="section-note">Εδώ μπαίνουν συγκεντρωμένα τα σημεία που ξεχωρίζει ο Τάσος Δούσης/Travelstyle για Κρακοβία, ώστε να έχεις ένα επιπλέον curated layer μέσα στον planner.</div>
-
-        <div class="planner-card searchable-item" data-search="dousis old town old city barbican st mary franciscan church krakow tips">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="d1" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Δούσης Pick: Παλιά Πόλη + Barbican + St. Mary’s</p>
-                        <p class="card-subtitle">Ο οδηγός Δούση δίνει πολύ μεγάλο βάρος στην πρώτη γνωριμία με την Παλιά Πόλη, την ιστορική πύλη Barbican και τη Βασιλική της Αγίας Μαρίας.</p>
-                        <div class="badges">
-                            <span class="badge">Old Town first</span>
-                            <span class="badge">Barbican</span>
-                            <span class="badge">St. Mary's</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/uX9X9X9X9X9X9X9X9" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Τι κρατάς από τον οδηγό <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <ul class="tips">
-                        <li>Ξεκίνα την πόλη από το ιστορικό της κέντρο για να νιώσεις αμέσως τη μεσαιωνική και αναγεννησιακή ταυτότητα της Κρακοβίας.</li>
-                        <li>Ο Barbican λειτουργεί σαν «πύλη εισόδου» στη μνήμη της παλιάς βασιλικής πόλης.</li>
-                        <li>Η St. Mary’s ξεχωρίζει για τους δύο άνισους πύργους και το διάσημο ωριαίο σάλπισμα.</li>
-                        <li>Extra spot: Η Εκκλησία του Αγίου Φραγκίσκου είναι πιο ήσυχη και πολύ ιδιαίτερη αισθητικά.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="dousis kazimierz jewish quarter schindler vistula bernatek love bridge">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="d2" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Δούσης Pick: Kazimierz + Schindler + Bernatek</p>
-                        <p class="card-subtitle">Στον οδηγό του, το Kazimierz δεν είναι απλώς συνοικία αλλά κομμάτι ιστορικής μνήμης, γαστρονομίας και βραδινής ζωής.</p>
-                        <div class="badges">
-                            <span class="badge">Kazimierz</span>
-                            <span class="badge">Schindler</span>
-                            <span class="badge">Vistula walk</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/L9fP8hV7XN9fP8hV7" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Σωστή οργάνωση περιοχής <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <ul class="tips">
-                        <li>Δες πρώτα Schindler για να καταλάβεις το ιστορικό βάθος της πόλης στον Β΄ Παγκόσμιο Πόλεμο.</li>
-                        <li>Μετά πέρασε Kazimierz για καφέ, φαγητό και βραδινή ατμόσφαιρα με πιο local χαρακτήρα.</li>
-                        <li>Κλείσε τη βόλτα με περπάτημα στον Βιστούλα ή στη γέφυρα Father Bernatek με τα «αιωρούμενα» γλυπτά.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="dousis wieliczka auschwitz day trip krakow excursion">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="d3" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Δούσης Pick: Wieliczka & Auschwitz ως μεγάλες εμπειρίες</p>
-                        <p class="card-subtitle">Ο Δούσης τα αναδεικνύει ως απόλυτα δυνατές εμπειρίες εκτός του στενού κέντρου: η μία θεαματική και υπόγεια, η άλλη ιστορικά συγκλονιστική.</p>
-                        <div class="badges">
-                            <span class="badge">Wieliczka</span>
-                            <span class="badge">Auschwitz</span>
-                            <span class="badge">Day trip logic</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/Z9vV7zR2W9vV7zR2A" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Πρακτικό travel tip <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <ul class="tips">
-                        <li>Μην τα στριμώξεις και τα δύο σε λάθος ρυθμό. Δώσε προτεραιότητα ανάλογα με το ύφος του ταξιδιού σου.</li>
-                        <li>Η Wieliczka είναι πιο visual / wow εμπειρία· το Auschwitz είναι βαρύ, ιστορικό και θέλει ψυχολογικό χώρο.</li>
-                        <li>Αν έχεις 3 ημέρες, συνήθως χωράει καλύτερα μία από τις δύο ως κύρια έξτρα εκδρομή.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="planner-card searchable-item" data-search="dousis food wesele hevre morskie oko starka cafe noworolski jama michalika">
-            <div class="card-top">
-                <div class="card-left">
-                    <div class="check-wrap"><input type="checkbox" id="d4" data-save></div>
-                    <div class="title-group">
-                        <p class="card-title">Δούσης Pick: curated φαγητό & ποτό</p>
-                        <p class="card-subtitle">Στις δικές του προτάσεις για φαγητό/ποτό ξεχωρίζουν σημεία για αυθεντική πολωνική κουζίνα, ατμόσφαιρα Kazimierz και πιο κλασικό καφέ στο κέντρο.</p>
-                        <div class="badges">
-                            <span class="badge">Wesele</span>
-                            <span class="badge">Hevre</span>
-                            <span class="badge">Starka</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="https://maps.app.goo.gl/vL7Yv9N8XN9fP8hV7" target="_blank" class="map-link">📍</a>
-            </div>
-            <button class="toggle-details" onclick="toggleDetails(this)">Πού ταιριάζει το καθένα <span>▾</span></button>
-            <div class="details">
-                <div class="details-content">
-                    <ul class="tips">
-                        <li><strong>Wesele:</strong> για πιο κεντρική, «κλασική» πολωνική εμπειρία στην Rynek Główny.</li>
-                        <li><strong>Hevre:</strong> για ατμόσφαιρα, κοκτέιλ/μπύρα και βραδινή έξοδο στο Kazimierz.</li>
-                        <li><strong>Morskie Oko:</strong> για ρουστίκ, παραδοσιακό ύφος και βαριά πολωνικά πιάτα.</li>
-                        <li><strong>Starka:</strong> για refined παραδοσιακές γεύσεις με modern touches και vegetarian επιλογές.</li>
-                        <li><strong>Jama Michalika / Café Noworolski:</strong> για πιο ιστορικό, καφέ-ζαχαροπλαστείο vibe.</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="progress-wrap">
-        <div class="progress-card">
-            <div class="progress-meta">
-                <span>Trip checklist progress</span>
-                <span id="progressText">0 / 11</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-bar-fill" id="progressBar"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="footer-note">
-        Οι επιλογές σου αποθηκεύονται τοπικά (localStorage) ώστε να μη χάνονται όταν ξανανοίξεις τη σελίδα. Για πλήρη offline χρήση μπορείς αργότερα να ενσωματώσεις static χάρτες, δικές σου σημειώσεις, προϋπολογισμό και ημερήσιο itinerary.
-    </div>
-</div>
-
-<script>
-    function openTab(evt, tabName) {
-        const tabcontent = document.getElementsByClassName('tab-content');
-        const tablinks = document.getElementsByClassName('tab-btn');
-
-        for (let i = 0; i < tabcontent.length; i++) tabcontent[i].classList.remove('active');
-        for (let i = 0; i < tablinks.length; i++) tablinks[i].classList.remove('active');
-
-        document.getElementById(tabName).classList.add('active');
-        evt.currentTarget.classList.add('active');
-    }
-
-    function toggleDetails(button) {
-        const content = button.nextElementSibling.querySelector('.details-content');
-        const arrow = button.querySelector('span');
-        const isOpen = content.classList.contains('open');
-
-        document.querySelectorAll('.details-content.open').forEach(el => {
-            if (el !== content) {
-                el.classList.remove('open');
-                const otherArrow = el.closest('.planner-card').querySelector('.toggle-details span');
-                if (otherArrow) otherArrow.textContent = '▾';
-            }
-        });
-
-        content.classList.toggle('open');
-        arrow.textContent = isOpen ? '▾' : '▴';
-    }
-
-    function updateProgress() {
-        const checkboxes = document.querySelectorAll('[data-save]');
-        const checked = document.querySelectorAll('[data-save]:checked').length;
-        const total = checkboxes.length;
-        const percent = total ? Math.round((checked / total) * 100) : 0;
-
-        document.getElementById('progressText').textContent = `${checked} / ${total}`;
-        document.getElementById('progressBar').style.width = percent + '%';
-    }
-
-    function saveState() {
-        const state = {};
-        document.querySelectorAll('[data-save]').forEach(cb => {
-            state[cb.id] = cb.checked;
-        });
-        localStorage.setItem('krakowTripPlannerState', JSON.stringify(state));
-        updateProgress();
-    }
-
-    function loadState() {
-        const saved = JSON.parse(localStorage.getItem('krakowTripPlannerState') || '{}');
-        document.querySelectorAll('[data-save]').forEach(cb => {
-            cb.checked = !!saved[cb.id];
-            cb.addEventListener('change', saveState);
-        });
-        updateProgress();
-    }
-
-    function setupSearch() {
-        const input = document.getElementById('searchInput');
-        const cards = document.querySelectorAll('.searchable-item');
-
-        input.addEventListener('input', function() {
-            const query = this.value.trim().toLowerCase();
-            cards.forEach(card => {
-                const text = card.dataset.search + ' ' + card.innerText.toLowerCase();
-                card.classList.toggle('hidden-by-search', !text.includes(query));
-            });
-        });
-    }
-
-    loadState();
-    setupSearch();
-</script>
-
-</body>
-</html>
+  );
+}
