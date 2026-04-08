@@ -3,133 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Krakow Trip Planner & Maps</title>
+    <title>Krakow Pro Guide</title>
     <style>
-        :root {
-            --primary-red: #d32f2f;
-            --bg-color: #f4f7f6;
-            --map-blue: #1a73e8;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); margin: 0; padding: 15px; }
-        .container { max-width: 600px; margin: auto; background: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
-        
-        .tabs { display: flex; background: #2c3e50; overflow-x: auto; }
-        .tab-btn { flex: 1; padding: 15px; border: none; background: none; color: white; cursor: pointer; font-weight: bold; min-width: 100px; }
-        .tab-btn.active { background: var(--primary-red); }
-
-        .tab-content { display: none; padding: 20px; animation: fadeIn 0.3s; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        h2 { color: var(--primary-red); border-bottom: 2px solid #eee; padding-bottom: 8px; margin-top: 0; }
-        .info-card { background: #fdf2f2; border-left: 5px solid var(--primary-red); padding: 15px; margin-bottom: 15px; border-radius: 5px; }
-        
-        .checklist-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 12px; border-bottom: 1px solid #eee; background: #fff; }
-        .item-left { display: flex; align-items: center; flex: 1; }
-        .checklist-item input { margin-right: 12px; transform: scale(1.4); }
-        
-        .map-link { text-decoration: none; font-size: 1.4em; padding: 5px 10px; border-radius: 8px; background: #e8f0fe; }
-        
-        label { cursor: pointer; flex: 1; font-size: 1rem; color: #333; }
-        input:checked + label { text-decoration: line-through; color: #999; }
+        :root { --red: #d32f2f; --dark: #2c3e50; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; margin: 0; padding: 10px; }
+        .card { background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; }
+        .header { background: var(--dark); color: white; padding: 20px; text-align: center; }
+        .tab-btn { padding: 15px; border: none; background: #eee; cursor: pointer; flex: 1; font-weight: bold; }
+        .tab-btn.active { background: var(--red); color: white; }
+        .content { padding: 20px; display: none; }
+        .content.active { display: block; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .history { font-size: 0.85em; color: #666; font-style: italic; margin-top: 5px; }
+        .map-icon { text-decoration: none; font-size: 1.5em; }
+        input[type="checkbox"] { transform: scale(1.5); margin-right: 15px; }
+        .badge { background: #e74c3c; color: white; font-size: 0.7em; padding: 2px 5px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="tabs">
-        <button class="tab-btn active" onclick="openTab(event, 'transport')">Μεταφορές</button>
-        <button class="tab-btn" onclick="openTab(event, 'food')">Φαγητό</button>
-        <button class="tab-btn" onclick="openTab(event, 'sights')">Αξιοθέατα</button>
+<div class="card">
+    <div class="header"><h1>🇵🇱 Krakow Pro Guide</h1></div>
+    <div style="display:flex;">
+        <button class="tab-btn active" onclick="show('trans')">Μεταφορές</button>
+        <button class="tab-btn" onclick="show('food')">Φαγητό</button>
+        <button class="tab-btn" onclick="show('sights')">Μνημεία</button>
     </div>
 
-    <div id="transport" class="tab-content active">
-        <h2>✈️ Αφιξη & Μετακίνηση</h2>
-        <div class="info-card">
-            <strong>Αεροδρόμιο Balice (KRK)</strong><br>
-            Εκεί προσγειώνεται η Ryanair.
-            <a href="https://maps.app.goo.gl/B9pWhE6x7W2W2mYBA" target="_blank" class="map-link">📍</a>
+    <div id="trans" class="content active">
+        <h2>🚆 Αφιξη / Αναχώρηση</h2>
+        <div class="item">
+            <div><strong>Τρένο SKA1 (Fast)</strong><br><small>17 PLN - 20 λεπτά</small></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Krakow+Airport+Train+Station" target="_blank" class="map-icon">📍</a>
         </div>
-        <div class="info-card">
-            <strong>Κεντρικός Σταθμός (Główny)</strong><br>
-            Τέρμα τρένου & λεωφορείου 300.
-            <a href="https://maps.app.goo.gl/uLpU8XzH9X8vX6CFA" target="_blank" class="map-link">📍</a>
+        <div class="item">
+            <div><strong>Λεωφορείο 300 (Budget)</strong><br><small>6 PLN - 45-60 λεπτά</small></div>
         </div>
-        <h3>Checklist Συγκοινωνίας</h3>
-        <div class="checklist-item">
-            <div class="item-left">
-                <input type="checkbox" id="t1"><label for="t1">Εισιτήριο Τρένου (SKA1)</label>
-            </div>
-            <span style="font-size:0.8em; color:#666;">~17 PLN</span>
-        </div>
+        <p>💡 <em>Tip: Κατέβασε το <strong>Jakdojade</strong> για εισιτήρια στο κινητό.</em></p>
     </div>
 
-    <div id="food" class="tab-content">
-        <h2>🍴 Τοπικά Στέκια</h2>
-        <div class="checklist-item">
-            <div class="item-left">
-                <input type="checkbox" id="f1"><label for="f1"><strong>Bar Mleczny pod Temidą</strong> (Pierogi)</label>
-            </div>
-            <a href="https://maps.app.goo.gl/vL7Yv9N8XN9fP8hV7" target="_blank" class="map-link">📍</a>
+    <div id="food" class="content">
+        <h2>🍴 Local Spots</h2>
+        <div class="item">
+            <input type="checkbox">
+            <div><strong>Bar Mleczny pod Temidą</strong><br><span class="history">Αυθεντικά Pierogi σε σοβιετικό στυλ.</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Bar+Mleczny+pod+Temidά" target="_blank" class="map-icon">📍</a>
         </div>
-        <div class="checklist-item">
-            <div class="item-left">
-                <input type="checkbox" id="f2"><label for="f2"><strong>Plac Nowy</strong> (Zapiekanka)</label>
-            </div>
-            <a href="https://maps.app.goo.gl/YyR9R5R9R5R9R5R9A" target="_blank" class="map-link">📍</a>
-        </div>
-        <div class="checklist-item">
-            <div class="item-left">
-                <input type="checkbox" id="f3"><label for="f3"><strong>Kuchnia u Doroty</strong> (Żurek)</label>
-            </div>
-            <a href="https://maps.app.goo.gl/hG5mBq1P4J7U7K6S8" target="_blank" class="map-link">📍</a>
-        </div>
-        <div class="checklist-item">
-            <div class="item-left">
-                <input type="checkbox" id="f4"><label for="f4"><strong>Stary Kleparz</strong> (Αγορά)</label>
-            </div>
-            <a href="https://maps.app.goo.gl/N6vL3hV4zR2W9vV7" target="_blank" class="map-link">📍</a>
+        <div class="item">
+            <input type="checkbox">
+            <div><strong>Plac Nowy (Zapiekanka)</strong><br><span class="history">Το απόλυτο street food στο Kazimierz.</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Plac+Nowy+Krakow" target="_blank" class="map-icon">📍</a>
         </div>
     </div>
 
-    <div id="sights" class="tab-content">
-        <h2>🏛️ Must See</h2>
-        <div class="checklist-item">
-            <div class="item-left">
-                <input type="checkbox" id="s1"><label for="s1">Κάστρο Wawel</label>
-            </div>
-            <a href="https://maps.app.goo.gl/X9X9X9X9X9X9X9X9A" target="_blank" class="map-link">📍</a>
+    <div id="sights" class="content">
+        <h2>🏛️ Ιστορία & Μνημεία</h2>
+        <div class="item">
+            <input type="checkbox">
+            <div><strong>Κάστρο Wawel</strong> <span class="badge">SOS</span><br><span class="history">Η έδρα των Πολωνών Βασιλέων.</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Wawel+Royal+Castle" target="_blank" class="map-icon">📍</a>
         </div>
-        <div class="checklist-item">
-            <div class="item-left">
-                <input type="checkbox" id="s2"><label for="s2">Main Market Square</label>
-            </div>
-            <a href="https://maps.app.goo.gl/uX9X9X9X9X9X9X9X9" target="_blank" class="map-link">📍</a>
-        </div>
-        <div class="checklist-item">
-            <div class="item-left">
-                <input type="checkbox" id="s3"><label for="s3">Εργοστάσιο Σίντλερ</label>
-            </div>
-            <a href="https://maps.app.goo.gl/L9fP8hV7XN9fP8hV7" target="_blank" class="map-link">📍</a>
-        </div>
-        <div class="checklist-item">
-            <div class="item-left">
-                <input type="checkbox" id="s4"><label for="s4">Αλατωρυχείο Wieliczka</label>
-            </div>
-            <a href="https://maps.app.goo.gl/Z9vV7zR2W9vV7zR2A" target="_blank" class="map-link">📍</a>
+        <div class="item">
+            <input type="checkbox">
+            <div><strong>Sukiennice</strong><br><span class="history">Η παλαιότερη αγορά υφασμάτων στην Ευρώπη.</span></div>
+            <a href="https://www.google.com/maps/search/?api=1&query=Sukiennice+Krakow" target="_blank" class="map-icon">📍</a>
         </div>
     </div>
 </div>
 
 <script>
-    function openTab(evt, tabName) {
-        var i, tabcontent, tablinks;
-        tabcontent = document.getElementsByClassName("tab-content");
-        for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
-        tablinks = document.getElementsByClassName("tab-btn");
-        for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
-        document.getElementById(tabName).style.display = "block";
-        evt.currentTarget.className += " active";
+    function show(id) {
+        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
     }
 </script>
 
