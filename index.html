@@ -1,94 +1,137 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin, Search, Star, Wallet, CalendarDays, UtensilsCrossed, Landmark, Plane, MoonStar, ExternalLink } from "lucide-react";
-import { motion } from "framer-motion";
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krakow Trip Planner & Maps</title>
+    <style>
+        :root {
+            --primary-red: #d32f2f;
+            --bg-color: #f4f7f6;
+            --map-blue: #1a73e8;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); margin: 0; padding: 15px; }
+        .container { max-width: 600px; margin: auto; background: white; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        .tabs { display: flex; background: #2c3e50; overflow-x: auto; }
+        .tab-btn { flex: 1; padding: 15px; border: none; background: none; color: white; cursor: pointer; font-weight: bold; min-width: 100px; }
+        .tab-btn.active { background: var(--primary-red); }
 
-type PlaceCategory = "transport" | "food" | "sight" | "dousis" | "nightlife";
+        .tab-content { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-type Place = {
-  id: string;
-  name: string;
-  category: PlaceCategory;
-  short: string;
-  description: string;
-  area: string;
-  duration: string;
-  price: string;
-  tags: string[];
-  mapsUrl: string;
-  dousis?: boolean;
-};
+        h2 { color: var(--primary-red); border-bottom: 2px solid #eee; padding-bottom: 8px; margin-top: 0; }
+        .info-card { background: #fdf2f2; border-left: 5px solid var(--primary-red); padding: 15px; margin-bottom: 15px; border-radius: 5px; }
+        
+        .checklist-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 12px; border-bottom: 1px solid #eee; background: #fff; }
+        .item-left { display: flex; align-items: center; flex: 1; }
+        .checklist-item input { margin-right: 12px; transform: scale(1.4); }
+        
+        .map-link { text-decoration: none; font-size: 1.4em; padding: 5px 10px; border-radius: 8px; background: #e8f0fe; }
+        
+        label { cursor: pointer; flex: 1; font-size: 1rem; color: #333; }
+        input:checked + label { text-decoration: line-through; color: #999; }
+    </style>
+</head>
+<body>
 
-type Budget = {
-  transport: number;
-  food: number;
-  attractions: number;
-  nightlife: number;
-  misc: number;
-};
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab(event, 'transport')">Μεταφορές</button>
+        <button class="tab-btn" onclick="openTab(event, 'food')">Φαγητό</button>
+        <button class="tab-btn" onclick="openTab(event, 'sights')">Αξιοθέατα</button>
+    </div>
 
-const places: Place[] = [
-  {
-    id: "transport-airport",
-    name: "Kraków Airport (KRK)",
-    category: "transport",
-    short: "Βασική πύλη άφιξης για την Κρακοβία.",
-    description: "Από εδώ ξεκινά η μεταφορά προς το κέντρο με τρένο, λεωφορείο ή ταξί. Για γρήγορο και άνετο ξεκίνημα, το τρένο προς Kraków Główny είναι συνήθως η πιο πρακτική λύση.",
-    area: "Balice",
-    duration: "20–30 λεπτά προς κέντρο",
-    price: "€",
-    tags: ["Airport", "Arrival", "KRK"],
-    mapsUrl: "https://maps.app.goo.gl/B9pWhE6x7W2W2mYBA",
-  },
-  {
-    id: "transport-train",
-    name: "SKA1 Train to Główny",
-    category: "transport",
-    short: "Η καλύτερη μεταφορά αεροδρόμιο → κέντρο.",
-    description: "Γρήγορη, ξεκούραστη και προβλέψιμη μεταφορά χωρίς traffic. Πολύ καλή επιλογή όταν θες να αφήσεις βαλίτσες και να βγεις άμεσα για βόλτα.",
-    area: "Airport → Center",
-    duration: "~20 λεπτά",
-    price: "20 PLN περίπου",
-    tags: ["Fast", "Train", "Center"],
-    mapsUrl: "https://maps.app.goo.gl/uLpU8XzH9X8vX6CFA",
-  },
-  {
-    id: "food-temida",
-    name: "Bar Mleczny pod Temidą",
-    category: "food",
-    short: "Αυθεντικό milk bar για budget πολωνικές γεύσεις.",
-    description: "Κλασική επιλογή για να δοκιμάσεις pierogi και παραδοσιακά πιάτα χωρίς τουριστικό περιτύλιγμα. Εξαιρετικό για αυθεντική και οικονομική εμπειρία.",
-    area: "Old Town",
-    duration: "45–60 λεπτά",
-    price: "€",
-    tags: ["Pierogi", "Budget", "Traditional"],
-    mapsUrl: "https://maps.app.goo.gl/vL7Yv9N8XN9fP8hV7",
-  },
-  {
-    id: "food-placnowy",
-    name: "Plac Nowy",
-    category: "food",
-    short: "Το σημείο για zapiekanka στο Kazimierz.",
-    description: "Street food stop με θρυλική zapiekanka και πολύ ζωντανή ατμόσφαιρα. Ιδανικό για χαλαρό βράδυ μετά από βόλτα στη γειτονιά.",
-    area: "Kazimierz",
-    duration: "30–45 λεπτά",
-    price: "€",
-    tags: ["Street Food", "Kazimierz", "Zapiekanka"],
-    mapsUrl: "https://maps.app.goo.gl/YyR9R5R9R5R9R5R9A",
-  },
-  {
-    id: "food-doroty",
-    name: "Kuchnia u Doroty",
-    category: "food",
-    short: "Σπιτική comfort πολωνική κουζίνα.",
-    description: "Πολύ καλή επιλογή για πλήρες γεύμα με ζεστή ατμόσφαιρα και πιάτα όπως żurek και άλλα πολωνικά classics.",
-    area: "Kazimierz",
-    duration: "60–90 λεπτά",
-    price: "€€",
-    tags: ["Żurek", "Homemade", "Comfort Food"],
+    <div id="transport" class="tab-content active">
+        <h2>✈️ Αφιξη & Μετακίνηση</h2>
+        <div class="info-card">
+            <strong>Αεροδρόμιο Balice (KRK)</strong><br>
+            Εκεί προσγειώνεται η Ryanair.
+            <a href="https://maps.app.goo.gl/B9pWhE6x7W2W2mYBA" target="_blank" class="map-link">📍</a>
+        </div>
+        <div class="info-card">
+            <strong>Κεντρικός Σταθμός (Główny)</strong><br>
+            Τέρμα τρένου & λεωφορείου 300.
+            <a href="https://maps.app.goo.gl/uLpU8XzH9X8vX6CFA" target="_blank" class="map-link">📍</a>
+        </div>
+        <h3>Checklist Συγκοινωνίας</h3>
+        <div class="checklist-item">
+            <div class="item-left">
+                <input type="checkbox" id="t1"><label for="t1">Εισιτήριο Τρένου (SKA1)</label>
+            </div>
+            <span style="font-size:0.8em; color:#666;">~17 PLN</span>
+        </div>
+    </div>
+
+    <div id="food" class="tab-content">
+        <h2>🍴 Τοπικά Στέκια</h2>
+        <div class="checklist-item">
+            <div class="item-left">
+                <input type="checkbox" id="f1"><label for="f1"><strong>Bar Mleczny pod Temidą</strong> (Pierogi)</label>
+            </div>
+            <a href="https://maps.app.goo.gl/vL7Yv9N8XN9fP8hV7" target="_blank" class="map-link">📍</a>
+        </div>
+        <div class="checklist-item">
+            <div class="item-left">
+                <input type="checkbox" id="f2"><label for="f2"><strong>Plac Nowy</strong> (Zapiekanka)</label>
+            </div>
+            <a href="https://maps.app.goo.gl/YyR9R5R9R5R9R5R9A" target="_blank" class="map-link">📍</a>
+        </div>
+        <div class="checklist-item">
+            <div class="item-left">
+                <input type="checkbox" id="f3"><label for="f3"><strong>Kuchnia u Doroty</strong> (Żurek)</label>
+            </div>
+            <a href="https://maps.app.goo.gl/hG5mBq1P4J7U7K6S8" target="_blank" class="map-link">📍</a>
+        </div>
+        <div class="checklist-item">
+            <div class="item-left">
+                <input type="checkbox" id="f4"><label for="f4"><strong>Stary Kleparz</strong> (Αγορά)</label>
+            </div>
+            <a href="https://maps.app.goo.gl/N6vL3hV4zR2W9vV7" target="_blank" class="map-link">📍</a>
+        </div>
+    </div>
+
+    <div id="sights" class="tab-content">
+        <h2>🏛️ Must See</h2>
+        <div class="checklist-item">
+            <div class="item-left">
+                <input type="checkbox" id="s1"><label for="s1">Κάστρο Wawel</label>
+            </div>
+            <a href="https://maps.app.goo.gl/X9X9X9X9X9X9X9X9A" target="_blank" class="map-link">📍</a>
+        </div>
+        <div class="checklist-item">
+            <div class="item-left">
+                <input type="checkbox" id="s2"><label for="s2">Main Market Square</label>
+            </div>
+            <a href="https://maps.app.goo.gl/uX9X9X9X9X9X9X9X9" target="_blank" class="map-link">📍</a>
+        </div>
+        <div class="checklist-item">
+            <div class="item-left">
+                <input type="checkbox" id="s3"><label for="s3">Εργοστάσιο Σίντλερ</label>
+            </div>
+            <a href="https://maps.app.goo.gl/L9fP8hV7XN9fP8hV7" target="_blank" class="map-link">📍</a>
+        </div>
+        <div class="checklist-item">
+            <div class="item-left">
+                <input type="checkbox" id="s4"><label for="s4">Αλατωρυχείο Wieliczka</label>
+            </div>
+            <a href="https://maps.app.goo.gl/Z9vV7zR2W9vV7zR2A" target="_blank" class="map-link">📍</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openTab(evt, tabName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+</script>
+
+</body>
+</html>
