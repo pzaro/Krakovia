@@ -3,82 +3,424 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Krakow Pro Guide</title>
+    <title>🇵🇱 Κρακοβία 2026: Dousis Ultimate Guide</title>
     <style>
-        :root { --red: #d32f2f; --dark: #2c3e50; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; margin: 0; padding: 10px; }
-        .card { background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; }
-        .header { background: var(--dark); color: white; padding: 20px; text-align: center; }
-        .tab-btn { padding: 15px; border: none; background: #eee; cursor: pointer; flex: 1; font-weight: bold; }
-        .tab-btn.active { background: var(--red); color: white; }
-        .content { padding: 20px; display: none; }
-        .content.active { display: block; }
-        .item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .history { font-size: 0.85em; color: #666; font-style: italic; margin-top: 5px; }
-        .map-icon { text-decoration: none; font-size: 1.5em; }
-        input[type="checkbox"] { transform: scale(1.5); margin-right: 15px; }
-        .badge { background: #e74c3c; color: white; font-size: 0.7em; padding: 2px 5px; border-radius: 5px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fdf6e3; color: #2c3e50; margin: 0; padding-bottom: 60px; }
+        
+        .header { background: #fff; position: sticky; top: 0; z-index: 900; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 10px 0; border-bottom: 3px solid #c0392b; }
+        h1 { text-align: center; color: #2c3e50; margin: 5px 0; font-size: 1.3rem; font-family: "Georgia", serif; }
+        
+        .filters-wrapper { display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
+        .scroll-container { display: flex; overflow-x: auto; gap: 8px; padding: 0 15px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .scroll-container::-webkit-scrollbar { display: none; }
+        
+        .btn-filter { flex: 0 0 auto; padding: 8px 15px; border-radius: 20px; border: 1px solid #c0392b; background: #fff; font-size: 0.85rem; color: #555; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+        .btn-filter.active { background: #c0392b; color: white; border-color: #c0392b; }
+        .date-btn.active { background: #2c3e50; border-color: #2c3e50; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 15px; }
+        .card { background: white; border-radius: 4px; padding: 15px; margin-bottom: 15px; border-left: 5px solid #c0392b; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
+        
+        .category-tag { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #c0392b; letter-spacing: 1px; }
+        .name { font-size: 1.3rem; font-weight: 800; margin: 5px 0; color: #2c3e50; font-family: "Georgia", serif; }
+        
+        .distance-tag { font-size: 0.9rem; color: #555; display: block; margin-bottom: 5px; background: #eee; padding: 3px 8px; border-radius: 4px; width: fit-content; }
+        
+        .meta-info { display: flex; gap: 10px; margin-top: 8px; font-size: 0.9rem; }
+        .time-badge { background: #2c3e50; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+        .cost-badge { background: #eafaf1; color: #27ae60; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+        
+        .tip { background: #fcf3cf; color: #555; padding: 10px; border-radius: 4px; margin-top: 10px; font-style: italic; font-size: 0.95rem; border-left: 3px solid #f1c40f; }
+
+        .card-actions { display: flex; gap: 10px; margin-top: 15px; }
+        .action-btn { flex: 1; padding: 12px; border-radius: 4px; text-align: center; font-weight: bold; text-decoration: none; font-size: 0.9rem; cursor: pointer; border: none; text-transform: uppercase; letter-spacing: 0.5px; }
+        .map-btn { background: white; color: #2c3e50; border: 1px solid #2c3e50; }
+        .info-btn { background: #2c3e50; color: white; display: flex; align-items: center; justify-content: center; gap: 5px; }
+
+        /* MODAL */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: flex-end; justify-content: center; }
+        .modal-content { background: white; width: 100%; max-width: 600px; border-radius: 15px 15px 0 0; padding: 25px; max-height: 85vh; overflow-y: auto; animation: slideUp 0.3s ease-out; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-title { font-size: 1.4rem; font-weight: bold; color: #2c3e50; margin: 0; font-family: "Georgia", serif; }
+        .close-btn { background: none; border: none; font-size: 2rem; color: #888; cursor: pointer; }
+        .modal-body { font-size: 1.05rem; line-height: 1.6; color: #333; white-space: pre-line; }
+        .audio-controls { margin-top: 20px; display: flex; gap: 10px; border-top: 1px solid #eee; padding-top: 15px; }
+        .speak-btn { background: #c0392b; color: white; width: 100%; border-radius: 8px; padding: 12px; font-weight: bold; border: none; cursor: pointer;}
+        .stop-btn { background: #555; color: white; display: none; width: 100%; border-radius: 8px; padding: 12px; font-weight: bold; border: none; cursor: pointer;}
+        
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="header"><h1>🇵🇱 Krakow Pro Guide</h1></div>
-    <div style="display:flex;">
-        <button class="tab-btn active" onclick="show('trans')">Μεταφορές</button>
-        <button class="tab-btn" onclick="show('food')">Φαγητό</button>
-        <button class="tab-btn" onclick="show('sights')">Μνημεία</button>
-    </div>
-
-    <div id="trans" class="content active">
-        <h2>🚆 Αφιξη / Αναχώρηση</h2>
-        <div class="item">
-            <div><strong>Τρένο SKA1 (Fast)</strong><br><small>17 PLN - 20 λεπτά</small></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Krakow+Airport+Train+Station" target="_blank" class="map-icon">📍</a>
-        </div>
-        <div class="item">
-            <div><strong>Λεωφορείο 300 (Budget)</strong><br><small>6 PLN - 45-60 λεπτά</small></div>
-        </div>
-        <p>💡 <em>Tip: Κατέβασε το <strong>Jakdojade</strong> για εισιτήρια στο κινητό.</em></p>
-    </div>
-
-    <div id="food" class="content">
-        <h2>🍴 Local Spots</h2>
-        <div class="item">
-            <input type="checkbox">
-            <div><strong>Bar Mleczny pod Temidą</strong><br><span class="history">Αυθεντικά Pierogi σε σοβιετικό στυλ.</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Bar+Mleczny+pod+Temidά" target="_blank" class="map-icon">📍</a>
-        </div>
-        <div class="item">
-            <input type="checkbox">
-            <div><strong>Plac Nowy (Zapiekanka)</strong><br><span class="history">Το απόλυτο street food στο Kazimierz.</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Plac+Nowy+Krakow" target="_blank" class="map-icon">📍</a>
+    <div class="header">
+        <h1>🇵🇱 Krakow 2026: Dousis Guide</h1>
+        <div class="filters-wrapper">
+            <div class="scroll-container">
+                <button class="btn-filter date-btn active" onclick="filterData('day', 0)">Όλα</button>
+                <button class="btn-filter date-btn" onclick="filterData('day', 1)">Τετ 3/6</button>
+                <button class="btn-filter date-btn" onclick="filterData('day', 2)">Πέμ 4/6</button>
+                <button class="btn-filter date-btn" onclick="filterData('day', 3)">Παρ 5/6</button>
+                <button class="btn-filter date-btn" onclick="filterData('day', 4)">Σάβ 6/6</button>
+                <button class="btn-filter date-btn" onclick="filterData('day', 5)">Κυρ 7/6</button>
+                <button class="btn-filter date-btn" onclick="filterData('day', 6)">Δευ 8/6</button>
+            </div>
+            <div class="scroll-container">
+                <button class="btn-filter active" onclick="filterData('cat', 'all')">Όλα</button>
+                <button class="btn-filter" onclick="filterData('cat', 'αξιοθέατα')">🏛️ Αξιοθέατα</button>
+                <button class="btn-filter" onclick="filterData('cat', 'φαγητό')">🥪 Φαγητό</button>
+                <button class="btn-filter" onclick="filterData('cat', 'ποτό')">🍸 Ποτό</button>
+                <button class="btn-filter" onclick="filterData('cat', 'μεταφορές')">🚆 Μεταφορές</button>
+            </div>
         </div>
     </div>
 
-    <div id="sights" class="content">
-        <h2>🏛️ Ιστορία & Μνημεία</h2>
-        <div class="item">
-            <input type="checkbox">
-            <div><strong>Κάστρο Wawel</strong> <span class="badge">SOS</span><br><span class="history">Η έδρα των Πολωνών Βασιλέων.</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Wawel+Royal+Castle" target="_blank" class="map-icon">📍</a>
-        </div>
-        <div class="item">
-            <input type="checkbox">
-            <div><strong>Sukiennice</strong><br><span class="history">Η παλαιότερη αγορά υφασμάτων στην Ευρώπη.</span></div>
-            <a href="https://www.google.com/maps/search/?api=1&query=Sukiennice+Krakow" target="_blank" class="map-icon">📍</a>
+    <div class="container" id="content"></div>
+
+    <div id="infoModal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 id="modalTitle" class="modal-title"></h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div id="modalBody" class="modal-body"></div>
+            <div class="audio-controls">
+                <button id="speakBtn" class="action-btn speak-btn" onclick="startSpeaking()">🔊 Ακρόαση Ξεναγού</button>
+                <button id="stopBtn" class="action-btn stop-btn" onclick="stopSpeaking()">⏹️ Σταμάτημα</button>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-    function show(id) {
-        document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        event.currentTarget.classList.add('active');
-    }
-</script>
+    <script>
+        const allData = [
+          {
+            "days": [1, 2, 3, 4, 5, 6],
+            "time": "Ευέλικτο",
+            "category": "🏨 Η Βάση μου",
+            "name": "Oak Tree Old Town Apartments",
+            "distance": "0' (Straszewskiego 24 7)",
+            "tip": "Συγκλονιστική τοποθεσία. Είσαι κυριολεκτικά πάνω στο Πάρκο Planty.",
+            "cost": "-",
+            "description": "Η βάση σου! Η οδός Straszewskiego είναι από τους πιο στρατηγικούς δρόμους της Κρακοβίας. Κυκλώνει την Παλιά Πόλη ακολουθώντας την πράσινη ζώνη του πάρκου Planty (το οποίο δημιουργήθηκε όταν γκρέμισαν τα μεσαιωνικά τείχη).\n\n📍 Μετακίνηση:\nΔεν θα χρειαστείς πολλά μέσα! Το κάστρο Wawel είναι 5 λεπτά περπάτημα νότια, ενώ η κεντρική πλατεία 8 λεπτά βορειοανατολικά. Αν χρειαστεί να πας πιο μακριά (π.χ. στην Εβραϊκή Συνοικία), η στάση του τραμ 'Filharmonia' είναι δίπλα σου."
+          },
+          {
+            "days": [1],
+            "time": "15:50",
+            "category": "🚆 Μεταφορές",
+            "name": "Άφιξη (KRK) & Μετάβαση στο κέντρο",
+            "distance": "Διαδρομή 25'",
+            "tip": "Αγνόησε τα ταξί! Το τοπικό τρένο (SKA1) είναι η πιο έξυπνη και φθηνή λύση.",
+            "cost": "17 PLN (~4€)",
+            "description": "Μόλις προσγειωθείς με την πτήση της Ryanair, βγαίνεις στις Αφίξεις και ακολουθείς τις ταμπέλες για το τρένο (Pociąg). Υπάρχει μια κλειστή πεζογέφυρα που σε πάει κατευθείαν στον σταθμό 'Kraków Lotnisko'. \n\n🎙️ Tip Δούση:\n'Ακούστε να δείτε φίλοι μου. Μην ασχολείστε με τα ταξί που θα σας ζητήσουν τα διπλάσια. Παίρνετε το τρένο SKA1. Φεύγει κάθε μισή ώρα και σας αφήνει στον Κεντρικό Σταθμό (Kraków Główny) σε 20 λεπτάκια. Εισιτήριο (17 Ζλότι) παίρνετε από το μηχάνημα στην αποβάθρα ή μέσα στο τρένο με κάρτα ανέπαφα. Από τον κεντρικό σταθμό, επειδή θα έχετε βαλίτσες, καλέστε ένα Uber για το διαμέρισμα. Θα σας πάρει το πολύ 3-4 ευρώ!'"
+          },
+          {
+            "days": [1],
+            "time": "19:00",
+            "category": "🏛️ Αξιοθέατα",
+            "name": "Rynek Główny (Η Κεντρική Πλατεία)",
+            "distance": "8' περπάτημα",
+            "tip": "Η μεγαλύτερη μεσαιωνική πλατεία της Ευρώπης.",
+            "cost": "Δωρεάν",
+            "description": "📖 Ιστορική Ανάλυση:\nΣχεδιασμένη το 1257, μετά την καταστροφή της πόλης από τους Τατάρους, είναι το απόλυτο κέντρο της Κρακοβίας. Στη μέση δεσπόζει το 'Sukiennice' (Αίθουσα Υφασμάτων), ίσως το παλαιότερο εν λειτουργία εμπορικό κέντρο του κόσμου.\n\n🎙️ Tip Δούση:\n'Το πρώτο σας απόγευμα, περπατήστε απλά την πλατεία για να νιώσετε τον παλμό. Είναι γεμάτη άμαξες, πλανόδιους μουσικούς και καλλιτέχνες. ΜΗΝ καθίσετε για φαγητό ακριβώς πάνω στην πλατεία. Είναι τουριστικά και πανάκριβα. Χαζέψτε τα φωτισμένα κτίρια και πάμε σε στενάκι για αυθεντικό φαγητό!'"
+          },
+          {
+            "days": [1],
+            "time": "20:30",
+            "category": "🥪 Φαγητό",
+            "name": "Δείπνο στο Morskie Oko",
+            "distance": "Πίσω από την πλατεία (Plac Szczepański 8)",
+            "tip": "Η απόλυτη ρουστίκ Πολωνική εμπειρία. Must για Pierogi.",
+            "cost": "40-60 PLN (~10-14€)",
+            "description": "📖 Γαστρονομική Ανάλυση:\nΤα 'Pierogi' είναι τα πολωνικά ντάμπλινγκς/ραβιόλια. Γεμίζονται με κιμά, μανιτάρια, ή τον κλασικό συνδυασμό Ruskie (τυρί και πατάτα). Μπορούν να σερβιριστούν βραστά ή τηγανητά.\n\n🎙️ Tip Δούση:\n'Πρώτο βράδυ και θα φάμε σαν ντόπιοι άρχοντες! Το Morskie Oko είναι διακοσμημένο σαν ξύλινο σαλέ από τα βουνά Τάτρα, με σερβιτόρους με τοπικές φορεσιές και συχνά ζωντανή παραδοσιακή μουσική. Παραγγείλτε μια καυτή σούπα Zurek (που έρχεται μέσα σε ένα καρβέλι ψωμί) και μια πιατέλα με ανάμεικτα Pierogi. Συνοδέψτε τα με παγωμένη μπύρα Tyskie. Οι μερίδες είναι γιγάντιες, μην παραγγείλετε με τα μάτια!'"
+          },
 
+          {
+            "days": [2],
+            "time": "10:00",
+            "category": "🏛️ Αξιοθέατα",
+            "name": "Βασιλικό Κάστρο Wawel & Σπηλιά Δράκου",
+            "distance": "5' νότια του διαμερίσματος",
+            "tip": "Το καμάρι της Πολωνίας. Πηγαίνετε νωρίς το πρωί.",
+            "cost": "Δωρεάν η αυλή, ~35 PLN Μουσεία",
+            "description": "📖 Ιστορική Ανάλυση:\nΧτισμένο πάνω στο λόφο Βάβελ δίπλα στον ποταμό Βιστούλα. Εκεί στέφονταν και θάβονταν οι Πολωνοί Βασιλιάδες για αιώνες. Ο Καθεδρικός Ναός του Κάστρου είναι ιερός τόπος για τους Πολωνούς.\n\n🎙️ Tip Δούση:\n'Επειδή μένετε δίπλα, ξεκινήστε από εδώ το πρωί που δεν έχει γκρουπ! Η είσοδος στην τεράστια εσωτερική αυλή είναι δωρεάν. Δεν χρειάζεται να πληρώσετε για να μπείτε σε όλα τα μουσεία (παίρνει ώρες). Αυτό που έχει πλάκα είναι να πληρώσετε λίγα Ζλότι για να κατεβείτε στη 'Σπηλιά του Δράκου' (Smocza Jama). Βγαίνετε κάτω στο ποτάμι και θα δείτε ένα μεταλλικό άγαλμα δράκου που βγάζει αληθινή φωτιά από το στόμα του κάθε 5 λεπτά!'"
+          },
+          {
+            "days": [2],
+            "time": "13:00",
+            "category": "🥪 Φαγητό",
+            "name": "Γεύμα στο Milkbar Tomasza",
+            "distance": "Στα στενά της Παλιάς Πόλης",
+            "tip": "Η κομμουνιστική γαστρονομική παράδοση σε μοντέρνα εκδοχή.",
+            "cost": "~30 PLN (~7€)",
+            "description": "📖 Γαστρονομική Ανάλυση:\nΤα 'Bar Mleczny' (Γαλακτοπωλεία) είναι θεσμός. Εφευρέθηκαν τον 19ο αιώνα αλλά έγιναν διάσημα τον κομμουνισμό ως κρατικές καντίνες για φθηνό μαγειρευτό. Το Milkbar Tomasza κρατάει τις τιμές χώμα, αλλά με καλύτερη ποιότητα και εξυπηρέτηση.\n\n🎙️ Tip Δούση:\n'Ξεχάστε το στημένο σέρβις. Εδώ είναι fast and furious! Είναι τίμιο, σπιτικό φαγητό. Παραγγείλτε Goulash με Placki ziemniaczane (τηγανίτες πατάτας). Η σάλτσα του κρέατος ποτίζει την τραγανή πατάτα και λιώνει στο στόμα. Θα φάτε ένα τεράστιο και πεντανόστιμο γεύμα πληρώνοντας ούτε 7 ευρώ!'"
+          },
+          {
+            "days": [2],
+            "time": "17:00",
+            "category": "🏛️ Αξιοθέατα",
+            "name": "Ναός Κοιμήσεως (St. Mary) & Hejnał",
+            "distance": "Κεντρική Πλατεία",
+            "tip": "Ακούστε τον θρυλικό σαλπιγκτή στο παράθυρο του πύργου.",
+            "cost": "15 PLN (~3.5€)",
+            "description": "📖 Ιστορική Ανάλυση:\nΗ επιβλητική εκκλησία από κόκκινο τούβλο. Κάθε ακριβώς ώρα, όλες τις ώρες της ημέρας, ένας αληθινός πυροσβέστης-σαλπιγκτής βγαίνει στον ψηλότερο πύργο και παίζει μια μελωδία προς τις 4 κατευθύνσεις της πόλης. Η μελωδία κόβεται απότομα εις ανάμνηση ενός φύλακα του 13ου αιώνα που έφαγε ένα μογγολικό βέλος στο λαιμό την ώρα που σήμαινε συναγερμό!\n\n🎙️ Tip Δούση:\n'Σταθείτε κάτω από τον ψηλό πύργο στο ακριβώς της ώρας. Μόλις ο σαλπιγκτής τελειώσει, κουνήστε του το χέρι από κάτω (συνήθως χαιρετάει το πλήθος). Αν μπείτε μέσα στην εκκλησία, θα πάθετε σοκ: η οροφή είναι βαμμένη βαθύ μπλε με χρυσά αστέρια. Μαγεία!'"
+          },
+          {
+            "days": [2],
+            "time": "21:00",
+            "category": "🍸 Ποτό",
+            "name": "Pijalnia Wódki i Piwa",
+            "distance": "Παντού γύρω από την πλατεία",
+            "tip": "Η χαρά της φθηνής βότκας και μπύρας. Πολωνικό έθιμο!",
+            "cost": "~6-8 PLN το σφηνάκι (1.5€)",
+            "description": "📖 Ιστορική Ανάλυση:\nΤα μαγαζιά αυτά είναι μια αναβίωση των παλιών εργατικών μπαρ της δεκαετίας του '60. Σερβίρουν αποκλειστικά μπύρα, σφηνάκια πολωνικής βότκας με διάφορες γεύσεις και μικρά σνακ (όπως ρέγκα ή ψωμί με λαρδί) για να κατεβαίνει το αλκοόλ.\n\n🎙️ Tip Δούση:\n'Εδώ γίνεται το έλα να δεις! Μπαίνεις μέσα, γίνεται χαμός από νεολαία, παίρνεις στο όρθιο 2-3 σφηνάκια (δοκιμάστε τη βότκα με γεύση φουντούκι ή μήλο) και μια βαρελίσια μπύρα. Πληρώνεις ψίχουλα. Είναι η απόλυτη Πολωνική εμπειρία του pre-drinking!'"
+          },
+
+          {
+            "days": [3],
+            "time": "08:00",
+            "category": "🏛️ Αξιοθέατα",
+            "name": "Auschwitz-Birkenau (Άουσβιτς)",
+            "distance": "1.5 ώρα με οργανωμένο πούλμαν",
+            "tip": "Η πιο βαριά εμπειρία της ζωής σας. Απαιτείται κράτηση ΜΗΝΕΣ πριν.",
+            "cost": "~120-150 PLN (~30€) με τουρ",
+            "description": "📖 Ιστορική Ανάλυση:\nΤο μεγαλύτερο στρατόπεδο εξόντωσης της Ναζιστικής Γερμανίας. Πάνω από 1.1 εκατομμύριο άνθρωποι δολοφονήθηκαν. Η ξενάγηση καλύπτει το Auschwitz I (το αρχικό στρατόπεδο με την ταμπέλα 'Arbeit Macht Frei') και το Birkenau (το τεράστιο πεδίο με τις ράγες του τρένου).\n\n🎙️ Tip Δούση:\n'Φίλοι μου, εδώ δεν χωράνε πολλά λόγια. Κλείστε οργανωμένο τουρ από την Κρακοβία τουλάχιστον ένα μήνα πριν (αλλιώς δεν θα βρείτε ούτε για δείγμα). Η εμπειρία είναι γροθιά στο στομάχι, θα βγείτε δακρυσμένοι, αλλά είναι χρέος μας να το δούμε. Ντυθείτε άνετα, έχει πολύ περπάτημα, και πάνω από όλα: Απόλυτος σεβασμός στον χώρο. Όχι χαρούμενες selfies στις ράγες!'"
+          },
+          {
+            "days": [3],
+            "time": "16:00",
+            "category": "🥪 Φαγητό",
+            "name": "Zapiekanka στο 'Endzior' (Plac Nowy)",
+            "distance": "Kazimierz (Εβραϊκή Συνοικία)",
+            "tip": "Το Πολωνικό street food της παρηγοριάς μετά από μια δύσκολη μέρα.",
+            "cost": "~15 PLN (~3.5€)",
+            "description": "📖 Γαστρονομική Ανάλυση:\nΗ Zapiekanka είναι μισή μπαγκέτα, ψημένη στο φούρνο με λιωμένο τυρί, μανιτάρια και πολλή κέτσαπ. Μπορείς να προσθέσεις καπνιστό λουκάνικο (Kielbasa) ή μπέικον. Ξεκίνησε τη δεκαετία του '70.\n\n🎙️ Tip Δούση:\n'Γυρίζοντας από το Άουσβιτς, θα είστε εξαντλημένοι. Δεν υπάρχει καλύτερο παρηγορητικό φαγητό. Πάτε στην πλατεία Plac Nowy. Στη μέση υπάρχει ένα κυκλικό κτίριο με παραθυράκια (το Okrąglak). Όλα πουλάνε Zapiekanka, αλλά εσείς θα στηθείτε στην ουρά του 'Endzior'. Είναι ο βασιλιάς! Φάτε την καυτή στο όρθιο!'"
+          },
+          {
+            "days": [3],
+            "time": "20:00",
+            "category": "🍸 Ποτό",
+            "name": "Μπαρότσαρκα στο Kazimierz",
+            "distance": "Γύρω από την Plac Nowy",
+            "tip": "Η παλιά Εβραϊκή συνοικία είναι η πιο ζωντανή γειτονιά της Κρακοβίας.",
+            "cost": "Μπύρα ~12-14 PLN",
+            "description": "📖 Ιστορική Ανάλυση:\nΑπό τον 14ο αιώνα, το Kazimierz ήταν η καρδιά της Εβραϊκής κοινότητας. Μετά τον πόλεμο εγκαταλείφθηκε, αλλά τα τελευταία χρόνια αναγεννήθηκε. Σήμερα, τα μισογκρεμισμένα σπίτια και οι αυλές είναι γεμάτα vintage μπαρ και street art.\n\n🎙️ Tip Δούση:\n'Αυτό είναι το δικό τους Ψυρρή! Ξεχάστε το σικ κέντρο. Εδώ θα πάτε στο μπαρ 'Alchemia', που είναι διακοσμημένο σαν σκοτεινό αλχημείο, ή στο 'Singer', όπου αντί για τραπέζια πίνετε το ποτό σας πάνω σε παλιές ραπτομηχανές Singer! Η ατμόσφαιρα είναι άκρως κινηματογραφική!'"
+          },
+
+          {
+            "days": [4],
+            "time": "09:30",
+            "category": "🏛️ Αξιοθέατα",
+            "name": "Αλατωρυχεία Wieliczka (Βιελίτσκα)",
+            "distance": "30' με το τρένο (SKA1) από το σταθμό",
+            "tip": "Μια ολόκληρη υπόγεια πόλη φτιαγμένη από αλάτι.",
+            "cost": "~130 PLN (~30€)",
+            "description": "📖 Ιστορική Ανάλυση:\nΜνημείο UNESCO, λειτουργούσε από τον 13ο αιώνα. Σε βάθος εκατοντάδων μέτρων, οι αλατωρύχοι έχουν σκαλίσει υπόγειες λίμνες, αγάλματα και το αποκορύφωμα: Το Παρεκκλήσι της Αγίας Κίνγκα, έναν τεράστιο καθεδρικό ναό όπου τα πάντα (ακόμα και οι πολυέλαιοι!) είναι από αλάτι.\n\n🎙️ Tip Δούση:\n'Πάμε πάλι έξυπνα. Δεν δίνουμε 50άρια σε τουριστικά πρακτορεία! Πάτε στον Κεντρικό Σταθμό, παίρνετε το τρένο (SKA1) και σε μισή ώρα είστε στην πόρτα του αλατωρυχείου. Η ξενάγηση διαρκεί 2+ ώρες. Θα κατεβείτε 800 σκαλιά (μην ανησυχείτε, η ανάβαση γίνεται με ένα παλιό, στενό ασανσέρ ανθρακωρύχων που είναι σκέτη εμπειρία). Έχει 15 βαθμούς εκεί κάτω, πάρτε ζακέτα!'"
+          },
+          {
+            "days": [4],
+            "time": "14:30",
+            "category": "🥪 Φαγητό",
+            "name": "Pod Wawelem (Kompania Kuflowa)",
+            "distance": "Κάτω από το Κάστρο",
+            "tip": "Τεράστιες ποσότητες κρέατος, μπύρας και θορύβου!",
+            "cost": "~50-70 PLN (~12-16€)",
+            "description": "📖 Γαστρονομική Ανάλυση:\nΕδώ πρωταγωνιστεί το κρέας. Κότσι χοιρινό (Golonka), σνίτσελ σε μέγεθος πιάτου, λουκάνικα και μπύρα με το λίτρο. Η φασαρία είναι μέρος της εμπειρίας.\n\n🎙️ Tip Δούση:\n'Πεινάσατε από τα σκαλιά του αλατωρυχείου; Το Pod Wawelem είναι δίπλα στο διαμέρισμά σας και είναι εμπειρία. Οι σερβιτόροι τρέχουν, η μουσική παίζει δυνατά και οι μερίδες είναι ΚΤΗΝΩΔΕΙΣ. Παραγγείλτε ένα τεράστιο κότσι στη μέση με πατατοσαλάτα. Θα σας κεράσουν και ένα σφηνάκι λικέρ κεράσι (Wiśniówka) στο τέλος για τη χώνεψη!'"
+          },
+          {
+            "days": [4],
+            "time": "18:00",
+            "category": "🍸 Ποτό",
+            "name": "Forum Przestrzenie",
+            "distance": "Δίπλα στο ποτάμι (Βιστούλα)",
+            "tip": "Το πιο 'cool' μέρος της Κρακοβίας για το ηλιοβασίλεμα.",
+            "cost": "Κοκτέιλ/Μπύρα ~15-25 PLN",
+            "description": "📖 Τοποθεσία:\nΣτεγάζεται στο ισόγειο του εγκαταλελειμμένου, μπρουταλιστικού ξενοδοχείου Forum (της σοβιετικής εποχής). Έχει τεράστιο εξωτερικό χώρο με ξαπλώστρες ακριβώς δίπλα στο ποτάμι.\n\n🎙️ Tip Δούση:\n'Πάρτε τον παραποτάμιο δρόμο. Μόλις φτάσετε στο Forum, θα νομίζετε ότι είστε στο Βερολίνο! Είναι το στέκι των hipsters και της νεολαίας. Πιάστε μια σεζλόνγκ (ξαπλώστρα), πάρτε μια craft μπύρα ή ένα κοκτέιλ, βάλτε γυαλί ηλίου και χαζέψτε τον ήλιο να πέφτει πίσω από το κάστρο Wawel. Η απόλυτη χαλάρωση!'"
+          },
+
+          {
+            "days": [5],
+            "time": "10:30",
+            "category": "🏛️ Αξιοθέατα",
+            "name": "Πλατεία Ηρώων Γκέτο & Εργοστάσιο Σίντλερ",
+            "distance": "Στη συνοικία Podgórze (μέσω γέφυρας Bernatka)",
+            "tip": "Η πραγματική ιστορία πίσω από την ταινία του Σπίλμπεργκ.",
+            "cost": "32 PLN (~7.5€)",
+            "description": "📖 Ιστορική Ανάλυση:\nΤο Podgórze ήταν η περιοχή του Εβραϊκού Γκέτο (1941-1943). Η Πλατεία των Ηρώων έχει 70 άδειες μεταλλικές καρέκλες, σύμβολο των επίπλων που άφησαν πίσω τους όσοι στάλθηκαν στα στρατόπεδα. Λίγο πιο κάτω, το Εργοστάσιο του Oskar Schindler είναι σήμερα ένα συγκλονιστικό διαδραστικό μουσείο για την Κρακοβία στην Κατοχή.\n\n🎙️ Tip Δούση:\n'Περάστε το ποτάμι από την πεζογέφυρα με τα λουκέτα (Bernatka). Σταθείτε για 5 λεπτά στις άδειες καρέκλες, η σιωπή εκεί λέει πολλά. Για το Μουσείο του Σίντλερ, κλείστε εισιτήριο οπωσδήποτε online! Δεν είναι απλά ένα μουσείο για την ταινία, είναι μια βιωματική μηχανή του χρόνου στο πώς ζούσαν οι Πολωνοί υπό Ναζιστική κατοχή. Ανατριχιαστικό!'"
+          },
+          {
+            "days": [5],
+            "time": "14:00",
+            "category": "🥪 Φαγητό",
+            "name": "Starka (Kazimierz)",
+            "distance": "Στον γυρισμό προς το κέντρο",
+            "tip": "Ποιοτικό πολωνικό φαγητό και δική τους σπιτική βότκα.",
+            "cost": "~60-80 PLN (~15-18€)",
+            "description": "📖 Γαστρονομική Ανάλυση:\nΤο Starka πήρε το όνομά του από μια παραδοσιακή πολωνική βότκα παλαιωμένη σε δρύινα βαρέλια. Συνδυάζει την παραδοσιακή κουζίνα με ελαφρώς πιο γκουρμέ παρουσίαση.\n\n🎙️ Tip Δούση:\n'Ένα από τα πιο ζεστά εστιατόρια! Το ψαρονέφρι τους με σάλτσα δαμάσκηνο είναι ποίηση, αλλά αυτό που το απογειώνει είναι τα σφηνάκια! Φτιάχνουν δική τους βότκα στο μαγαζί (Starka). Ζητήστε ένα σφηνάκι με γεύση αχλάδι ή δαμάσκηνο. Κατεβαίνει σαν νεράκι!'"
+          },
+          {
+            "days": [5],
+            "time": "17:30",
+            "category": "☕ Ποτό",
+            "name": "Καφές στο Cafe Camelot",
+            "distance": "Στενά της Παλιάς Πόλης (Tomasza 17)",
+            "tip": "Το πιο Instagrammable, vintage καφέ της πόλης.",
+            "cost": "Καφές/Γλυκό ~25 PLN (~6€)",
+            "description": "📖 Τοποθεσία:\nΣτεγάζεται σε ένα κτίριο του 13ου αιώνα. Ήταν μπουρδέλο τη δεκαετία του '20, τώρα είναι ένα καφέ-μπιστρό γεμάτο αντίκες, πίνακες και φρέσκα λουλούδια.\n\n🎙️ Tip Δούση:\n'Αφού φάγατε, πάμε για μια απογευματινή στάση. Το Camelot είναι σαν να πίνεις καφέ στο σαλόνι της Πολωνής γιαγιάς σου που ήταν αριστοκράτισσα. Πάρτε ένα ζεστό καφέ (ή μια ζεστή σοκολάτα αν κάνει ψύχρα) και ένα κομμάτι Szarlotka (η περίφημη πολωνική μηλόπιτα). Η αισθητική του μαγαζιού είναι αξεπέραστη!'"
+          },
+
+          {
+            "days": [6],
+            "time": "10:00",
+            "category": "🏛️ Αξιοθέατα",
+            "name": "Πάρκο Planty & Obwarzanek",
+            "distance": "0' (Μπροστά στο διαμέρισμα)",
+            "tip": "Τελευταία βόλτα στο πράσινο και πρωινό στο όρθιο.",
+            "cost": "3 PLN (~0.70€)",
+            "description": "📖 Γαστρονομική Ανάλυση:\nΤο Obwarzanek krakowski είναι το παραδοσιακό κουλούρι της πόλης (προστατευόμενη ονομασία προέλευσης). Είναι κάτι ανάμεσα σε bagel και pretzel, βρασμένο πριν ψηθεί, συνήθως πασπαλισμένο με σουσάμι, παπαρουνόσπορο ή τυρί.\n\n🎙️ Tip Δούση:\n'Κάνετε check-out, αφήνετε τις βαλίτσες στο διαμέρισμα (ή σε locker στον σταθμό) και βγαίνετε στο Planty. Βρείτε τα μικρά μπλε καροτσάκια που πουλάνε Obwarzanek (έχει παντού γύρω από την πλατεία). Πάρτε ένα κουλούρι με παπαρουνόσπορο με λιγότερο από 1 ευρώ. Φάτε το περπατώντας κάτω από τα δέντρα!'"
+          },
+          {
+            "days": [6],
+            "time": "12:00",
+            "category": "🏛️ Αξιοθέατα",
+            "name": "Μουσείο Czartoryski (Η Κυρία με την Ερμίνα)",
+            "distance": "Παλιά Πόλη",
+            "tip": "Δείτε έναν αυθεντικό Λεονάρντο Ντα Βίντσι.",
+            "cost": "45 PLN (~10€)",
+            "description": "📖 Ιστορική Ανάλυση:\nΤο μουσείο φιλοξενεί έναν από τους πολυτιμότερους πίνακες του κόσμου: την 'Κυρία με την Ερμίνα' του Leonardo da Vinci. Είναι ένας από τους μόλις 4 πίνακες γυναικών (μαζί με τη Μόνα Λίζα) που ζωγράφισε ο Da Vinci.\n\n🎙️ Tip Δούση:\n'Είναι μικρό και κομψό μουσείο. Ο πίνακας του Da Vinci εκτίθεται σε ένα σκοτεινό δωμάτιο, φωτισμένος άψογα. Μπορείς να πας πολύ κοντά, σε αντίθεση με τον χαμό της Μόνα Λίζα στο Λούβρο. Αξίζει το 10ρικο μόνο για αυτόν τον πίνακα!'"
+          },
+          {
+            "days": [6],
+            "time": "14:30",
+            "category": "🥪 Φαγητό",
+            "name": "Pierogarnia Krakowiacy",
+            "distance": "Κοντά στον Κεντρικό Σταθμό",
+            "tip": "Ένα τελευταίο γρήγορο (αλλά αυθεντικό) γεύμα πριν το αεροδρόμιο.",
+            "cost": "~30 PLN (~7€)",
+            "description": "📖 Γαστρονομική Ανάλυση:\nΑλυσίδα μεν, εξαιρετικής ποιότητας δε. Είναι σχεδιασμένα σαν παραδοσιακές πολωνικές κουζίνες, με γρήγορη εξυπηρέτηση και τεράστια ποικιλία σε Pierogi.\n\n🎙️ Tip Δούση:\n'Πριν πάρουμε το δρόμο της επιστροφής, πρέπει να φάμε άλλη μια φορά Pierogi! Επειδή θέλουμε κάτι γρήγορο, το Krakowiacy είναι τέλειο. Δοκιμάστε τα γλυκά Pierogi γεμιστά με φράουλες ή μούρα, πασπαλισμένα με ζάχαρη και κρέμα. Είναι το απόλυτο comfort food!'"
+          },
+          {
+            "days": [6],
+            "time": "19:00",
+            "category": "🚆 Μεταφορές",
+            "name": "Αναχώρηση: Προς Αεροδρόμιο (KRK)",
+            "distance": "Πτήση 21:55 (FR7226)",
+            "tip": "Το τρένο από τον Κεντρικό Σταθμό (Kraków Główny) σας πάει σε 20'.",
+            "cost": "17 PLN (~4€)",
+            "description": "📖 Πρακτική Ανάλυση:\nΟ σταθμός 'Kraków Główny' συνδέεται με το μεγάλο εμπορικό κέντρο Galeria Krakowska. Ιδανικό για τα τελευταία ψώνια (π.χ. πολωνικές καραμέλες Krówki).\n\n🎙️ Tip Δούση:\n'Φίλοι μου, το ταξίδι τελείωσε. Πηγαίνετε στον Κεντρικό Σταθμό γύρω στις 18:30-19:00. Βγάλτε εισιτήριο για το τρένο SKA1 προς 'Kraków Lotnisko'. Η διαδρομή είναι αψεγάδιαστη, χωρίς κίνηση και άγχος. Θα είστε στο αεροδρόμιο άνετα 2.5 ώρες πριν την πτήση σας. Καλό ταξίδι επιστροφής στη Θεσσαλονίκη!'"
+          }
+        ];
+
+        let currentDisplayData = [];
+        let currentDay = 0;
+        let currentCat = 'all';
+        let currentTextToSpeak = "";
+        const synth = window.speechSynthesis;
+
+        // Accent Normalization
+        const removeAccents = (str) => {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        };
+
+        render();
+
+        function filterData(type, value) {
+            if (type === 'day') {
+                currentDay = value;
+                document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+            } else {
+                currentCat = value;
+                document.querySelectorAll('.btn-filter:not(.date-btn)').forEach(b => b.classList.remove('active'));
+            }
+            event.target.classList.add('active');
+            render();
+        }
+
+        function render() {
+            const container = document.getElementById('content');
+            container.innerHTML = '';
+
+            currentDisplayData = allData.filter(item => {
+                const dayMatch = currentDay === 0 || (item.days && item.days.includes(currentDay));
+                let catMatch = true;
+                
+                if (currentCat !== 'all') {
+                    const itemCatClean = removeAccents(item.category);
+                    const searchCatClean = removeAccents(currentCat);
+                    catMatch = itemCatClean.includes(searchCatClean);
+                }
+                
+                return dayMatch && catMatch;
+            });
+
+            if (currentDisplayData.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#777;">Κενό Πρόγραμμα! Ώρα για μπύρα Tyskie! 🍻</div>';
+                return;
+            }
+
+            currentDisplayData.forEach((item, index) => {
+                const distanceHtml = item.distance ? `<span class="distance-tag">👣 Απόσταση/Info: <b>${item.distance}</b></span>` : '';
+                const searchQuery = encodeURIComponent(item.name + " Krakow");
+                const realMapUrl = `https://www.google.com/maps/search/?api=1&query=Dal+Moro's+Fresh+Pasta+to+Go+Venice3{searchQuery}`;
+
+                container.innerHTML += `
+                    <div class="card">
+                        <div class="category-tag">${item.category}</div>
+                        <div class="name">${item.name}</div>
+                        ${distanceHtml}
+                        <div class="meta-info">
+                            <span class="time-badge">🕒 ${item.time || '-'}</span>
+                            <span class="cost-badge">💰 ${item.cost}</span>
+                        </div>
+                        <div class="tip">💡 ${item.tip}</div>
+                        <div class="card-actions">
+                            <button class="action-btn info-btn" onclick="openModal(${index})">ℹ️ Πλήρης Ανάλυση</button>
+                            <a href="${realMapUrl}" target="_blank" class="action-btn map-btn">📍 Χάρτης</a>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openModal(index) {
+            const item = currentDisplayData[index];
+            if (!item) return;
+            document.getElementById('modalTitle').innerText = item.name;
+            document.getElementById('modalBody').innerText = item.description || item.tip;
+            
+            // Clean text for speech synthesis (remove and emojis)
+            let cleanText = (item.description || item.tip).replace(/\]+\]/g, '');
+            currentTextToSpeak = cleanText.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '');
+            
+            document.getElementById('infoModal').style.display = 'flex';
+            stopSpeaking();
+        }
+
+        function closeModal() {
+            document.getElementById('infoModal').style.display = 'none';
+            stopSpeaking();
+        }
+
+        function startSpeaking() {
+            if (synth.speaking) return;
+            if (currentTextToSpeak) {
+                const utterThis = new SpeechSynthesisUtterance(currentTextToSpeak);
+                utterThis.lang = 'el-GR';
+                utterThis.rate = 0.95;
+                utterThis.onend = () => toggleAudioButtons(false);
+                synth.speak(utterThis);
+                toggleAudioButtons(true);
+            }
+        }
+
+        function stopSpeaking() {
+            if (synth.speaking) synth.cancel();
+            toggleAudioButtons(false);
+        }
+
+        function toggleAudioButtons(isSpeaking) {
+            document.getElementById('speakBtn').style.display = isSpeaking ? 'none' : 'block';
+            document.getElementById('stopBtn').style.display = isSpeaking ? 'block' : 'none';
+        }
+    </script>
 </body>
 </html>
